@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Урок 2: Обработка клавиш | Создание игры Змейка</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0c2461, #1e3799, #4a69bd);
+            color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .presentation-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            padding: 40px;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            z-index: 10;
+        }
+
+        .slide-content {
+            max-width: 1200px;
+            width: 90%;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 3.2rem;
+            margin-bottom: 20px;
+            color: #00ff88;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+            background: linear-gradient(90deg, #00ff88, #00ccff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #00ccff;
+        }
+
+        h3 {
+            font-size: 1.6rem;
+            margin-bottom: 15px;
+            color: #ffcc00;
+        }
+
+        p {
+            font-size: 1.3rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        ul, ol {
+            text-align: left;
+            font-size: 1.2rem;
+            line-height: 1.5;
+            margin: 15px auto;
+            max-width: 800px;
+            padding-left: 30px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            padding-left: 10px;
+        }
+
+        .code-block {
+            background: #1a1a2e;
+            color: #00ff88;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 1rem;
+            text-align: left;
+            margin: 15px auto;
+            max-width: 800px;
+            border-left: 4px solid #00ff88;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        .code-block.small {
+            font-size: 0.9rem;
+            padding: 15px;
+        }
+
+        .step {
+            background: rgba(0, 204, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 12px 0;
+            border-left: 4px solid #00ccff;
+        }
+
+        .checklist {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .checklist li:before {
+            content: "✅ ";
+            margin-right: 10px;
+            color: #00ff88;
+        }
+
+        .warning {
+            background: rgba(255, 100, 100, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #ff6666;
+            margin: 15px 0;
+        }
+
+        .tip {
+            background: rgba(255, 204, 0, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #ffcc00;
+            margin: 15px 0;
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: linear-gradient(135deg, #00ccff, #0066ff);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 10px rgba(0, 102, 255, 0.4);
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 102, 255, 0.6);
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            font-size: 1.1rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 16px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 100;
+        }
+
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00ccff);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .logo {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #00ff88;
+            z-index: 100;
+        }
+
+        .timer {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            font-size: 1.1rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 16px;
+            border-radius: 15px;
+        }
+
+        .highlight {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+
+        .key {
+            display: inline-block;
+            background: #2d2d44;
+            color: #00ccff;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            margin: 4px;
+            border: 1px solid #00ccff;
+            font-size: 1rem;
+        }
+
+        .key.esc {
+            background: #ff4444;
+            color: white;
+            border-color: #ff6666;
+        }
+
+        .game-frame {
+            border: 2px solid #00ff88;
+            padding: 15px;
+            border-radius: 8px;
+            background: #000;
+            display: inline-block;
+            margin: 15px 0;
+            font-family: 'Consolas', monospace;
+            font-size: 1.1rem;
+            color: #00ff88;
+            min-width: 400px;
+        }
+
+        .visual-example {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .visual-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            min-width: 180px;
+        }
+
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+            gap: 10px;
+        }
+
+        .flow-arrow {
+            font-size: 2rem;
+            color: #00ff88;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.3rem; }
+            h2 { font-size: 1.6rem; }
+            h3 { font-size: 1.3rem; }
+            p, li { font-size: 1.1rem; }
+            .slide-content { padding: 20px; }
+            .nav-btn { padding: 10px 16px; font-size: 0.9rem; }
+            .code-block { font-size: 0.9rem; padding: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">🐍 Урок 2: Обработка клавиш</div>
+    <div class="timer" id="timer">Время: 00:00</div>
+    
+    <div class="progress-bar">
+        <div class="progress" id="progress"></div>
+    </div>
+
+    <div class="presentation-container">
+        <!-- Слайд 1 -->
+        <div class="slide active" id="slide1">
+            <div class="slide-content">
+                <h1>⌨️ УРОК 2: ГОЛОС ИГРЫ</h1>
+                <h2>Учим игру слушать клавиатуру</h2>
+                <p style="font-size: 1.4rem; margin-top: 20px; color: #00ccff;">
+                    Сегодня мы сделаем нашу игру интерактивной!
+                </p>
+                <div class="step" style="margin-top: 20px;">
+                    <h3>🎯 Цель урока:</h3>
+                    <p>1. Научить игру реагировать на нажатие клавиш</p>
+                    <p>2. Добавить цивилизованный выход из игры</p>
+                    <p>3. Подготовить основу для управления змейкой</p>
+                </div>
+                <p style="margin-top: 15px;">Длительность: 1 час 20 минут</p>
+            </div>
+        </div>
+
+        <!-- Слайд 2 -->
+        <div class="slide" id="slide2">
+            <div class="slide-content">
+                <h2>📝 Проверка домашнего задания</h2>
+                <div class="step">
+                    <h3>Быстрая проверка Урока 1:</h3>
+                    <ul class="checklist">
+                        <li>У всех есть игровой цикл с точкой?</li>
+                        <li>Точка "мигает" на экране?</li>
+                        <li>Кто изменил цвет/символ точки?</li>
+                        <li>Кто добавил звук или вторую точку?</li>
+                    </ul>
+                </div>
+                <div class="tip" style="margin-top: 15px;">
+                    <strong>💡 Вспоминаем главное:</strong>
+                    <div class="code-block small">
+bool isGameRunning = true;
+while (isGameRunning)
+{
+    Console.Clear();
+    Console.SetCursorPosition(playerX, playerY);
+    Console.Write("●");
+    Thread.Sleep(100);
+}</div>
+                    <p>Проблема: Выход только через <span class="key">Ctrl+C</span> — неудобно!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 3 -->
+        <div class="slide" id="slide3">
+            <div class="slide-content">
+                <h2>🎯 Новая цель: Игра должна нас слышать!</h2>
+                <div class="step">
+                    <h3>Текущая проблема:</h3>
+                    <ul>
+                        <li>Игра игнорирует клавиатуру</li>
+                        <li>Выход только "аварийный" (<span class="key">Ctrl+C</span>)</li>
+                        <li>Нет обратной связи от игрока</li>
+                    </ul>
+                </div>
+                <div class="tip">
+                    <h3>Решение: Добавим обработку клавиш!</h3>
+                    <p><strong>Первая команда: Выход по клавише <span class="key esc">Esc</span></strong></p>
+                    <p>Это создаст:</p>
+                    <ul>
+                        <li>Удобный способ завершения игры</li>
+                        <li>Основу для будущего управления</li>
+                        <li>Понимание взаимодействия с пользователем</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 4 -->
+        <div class="slide" id="slide4">
+            <div class="slide-content">
+                <h2>🔍 ШАГ 1: Как компьютер "слышит" клавиши?</h2>
+                <p>В C# есть специальные методы для работы с клавиатурой:</p>
+                
+                <div class="visual-example">
+                    <div class="visual-box">
+                        <h4>1. Console.KeyAvailable</h4>
+                        <p>Проверяет: "Нажали ли что-то?"</p>
+                        <div class="code-block" style="font-size: 0.9rem; margin: 10px 0;">
+if (Console.KeyAvailable)
+{
+    // Да, что-то нажали!
+}</div>
+                    </div>
+                    
+                    <div class="visual-box">
+                        <h4>2. Console.ReadKey()</h4>
+                        <p>Читает: "Что именно нажали?"</p>
+                        <div class="code-block" style="font-size: 0.9rem; margin: 10px 0;">
+ConsoleKey key = Console.ReadKey(true).Key;
+// key теперь содержит код клавиши</div>
+                    </div>
+                </div>
+                
+                <div class="flow-diagram">
+                    <div class="visual-box" style="min-width: 120px;">
+                        Игрок нажимает<br>клавишу
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="visual-box" style="min-width: 120px;">
+                        KeyAvailable<br>= true
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="visual-box" style="min-width: 120px;">
+                        ReadKey()<br>читает клавишу
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="visual-box" style="min-width: 120px;">
+                        Игра<br>реагирует
+                    </div>
+                </div>
+                
+                <div class="warning">
+                    <strong>⚠️ Важно про Console.ReadKey(true):</strong><br>
+                    Параметр <span class="highlight">true</span> означает "не показывать нажатую клавишу на экране".<br>
+                    Без него в консоли появлялись бы буквы при нажатии!
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 5 -->
+        <div class="slide" id="slide5">
+            <div class="slide-content">
+                <h2>🚪 ШАГ 2: Добавляем выход по Esc</h2>
+                <p>Модифицируем наш игровой цикл:</p>
+                <div class="code-block">
+// Старая версия (только цикл)
+while (isGameRunning)
+{
+    Console.Clear();
+    Console.SetCursorPosition(playerX, playerY);
+    Console.Write("●");
+    Thread.Sleep(100);
+}
+==================================
+// Новая версия (с обработкой Esc)
+while (isGameRunning)
+{
+    // 1. ПРОВЕРЯЕМ НАЖАТИЕ КЛАВИШ
+    if (Console.KeyAvailable)  // Если что-то нажали
+    {
+        ConsoleKey key = Console.ReadKey(true).Key;  // Читаем клавишу
+        
+        // 2. ЕСЛИ НАЖАЛИ ESC - ВЫХОДИМ
+        if (key == ConsoleKey.Escape)
+        {
+            isGameRunning = false;  // Меняем флаг
+        }
+    }
+    
+    // 3. ОСТАЛЬНОЙ КОД (как раньше)
+    Console.Clear();
+    Console.SetCursorPosition(playerX, playerY);
+    Console.Write("●");
+    Thread.Sleep(100);
+}</div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Как это работает?</h3>
+                    <ol>
+                        <li>В каждой итерации цикла проверяем: нажата ли клавиша?</li>
+                        <li>Если да — читаем, какая именно</li>
+                        <li>Если это <span class="key esc">Esc</span> — меняем флаг <span class="highlight">isGameRunning</span> на <span class="highlight">false</span></li>
+                        <li>Цикл while завершается, программа заканчивается</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 6 -->
+        <div class="slide" id="slide6">
+            <div class="slide-content">
+                <h2>👁️ ШАГ 3: Показываем результат</h2>
+                <p>Что должно получиться:</p>
+                <div class="game-frame">
+                    ● - точка игрока (как в Уроке 1)<br>
+                    <br>
+                    НОВАЯ ФУНКЦИЯ:<br>
+                    Нажми <span class="key esc">Esc</span> - игра завершится!<br>
+                    <br>
+                    Больше не нужен Ctrl+C!
+                </div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Полный код на этом этапе:</h3>
+                    <div class="code-block" style="font-size: 0.9rem; max-height: 350px; overflow-y: auto;">
+using System;
+using System.Threading;
+
+namespace SnakeGame
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            int playerX = 10;
+            int playerY = 5;
+            bool isGameRunning = true;
+            
+            Console.WriteLine("Игра начинается!");
+            Console.WriteLine("Нажмите Esc для выхода");
+            Console.ReadKey();
+            Console.Clear();
+            
+            while (isGameRunning)
+            {
+                // --- НОВЫЙ КОД: ОБРАБОТКА КЛАВИШ ---
+                if (Console.KeyAvailable)
+                {
+                    ConsoleKey key = Console.ReadKey(true).Key;
+                    
+                    if (key == ConsoleKey.Escape)
+                    {
+                        isGameRunning = false;
+                    }
+                }
+                // --- КОНЕЦ НОВОГО КОДА ---
+                
+                // Старый код (игровой цикл)
+                Console.Clear();
+                Console.SetCursorPosition(playerX, playerY);
+                Console.Write("●");
+                
+                Thread.Sleep(100);
+            }
+            
+            // Новый код: красивое завершение
+            Console.Clear();
+            Console.WriteLine("Игра завершена!");
+            Console.WriteLine("Спасибо за игру!");
+            Console.ReadKey();
+        }
+    }
+}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 7 -->
+        <div class="slide" id="slide7">
+            <div class="slide-content">
+                <h2>🔄 ШАГ 4: Улучшаем логику выхода</h2>
+                <p>Проблема: После нажатия Esc точка ещё один раз рисуется</p>
+                
+                <div class="tip">
+                    <strong>Решение: Используем continue</strong>
+                    <p>Ключевое слово <span class="highlight">continue</span> пропускает оставшуюся часть цикла и переходит к следующей итерации.</p>
+                </div>
+                
+                <div class="code-block">
+while (isGameRunning)
+{
+    if (Console.KeyAvailable)
+    {
+        var key = Console.ReadKey(true).Key;
+        
+        if (key == ConsoleKey.Escape)
+        {
+            isGameRunning = false;
+            continue; // <-- ПРОПУСКАЕМ ОТРИСОВКУ!
+        }
+    }
+    
+    // Этот код не выполнится, если нажали Esc
+    Console.Clear();
+    Console.SetCursorPosition(playerX, playerY);
+    Console.Write("●");
+    
+    Thread.Sleep(100);
+}</div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Альтернатива: Использовать break</h3>
+                    <div class="code-block small">
+if (key == ConsoleKey.Escape)
+{
+    break; // Немедленный выход из цикла
+}</div>
+                    <p><span class="highlight">break</span> vs <span class="highlight">continue</span>:</p>
+                    <ul>
+                        <li><span class="highlight">break</span> — сразу выйти из цикла</li>
+                        <li><span class="highlight">continue</span> — перейти к следующей итерации</li>
+                        <li>В нашем случае разницы почти нет</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 8 -->
+        <div class="slide" id="slide8">
+            <div class="slide-content">
+                <h2>🎨 ШАГ 5: Добавляем обратную связь</h2>
+                <p>Сделаем завершение игры более приятным:</p>
+                <div class="code-block">
+// После выхода из игрового цикла
+Console.Clear();
+Console.ForegroundColor = ConsoleColor.Yellow;
+Console.WriteLine("=== ИГРА ЗАВЕРШЕНА ===");
+Console.WriteLine("Вы нажали клавишу Escape");
+Console.WriteLine("\nСпасибо за игру!");
+Console.ResetColor();
+Console.WriteLine("\nНажмите любую клавишу...");
+Console.ReadKey();</div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Можно добавить звук!</h3>
+                    <div class="code-block small">
+// При нажатии Esc
+Console.Beep(500, 200);  // Частота 500Гц, длительность 200мс
+isGameRunning = false;</div>
+                </div>
+                
+                <div class="tip">
+                    <strong>💡 Почему это важно:</strong><br>
+                    Обратная связь делает программу более "живой" и понятной для пользователя.<br>
+                    Игрок видит, что игра действительно отреагировала на его действие.
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 9 -->
+        <div class="slide" id="slide9">
+            <div class="slide-content">
+                <h2>💾 Сохраняем результат</h2>
+                <div class="code-block small" style="text-align: center;">
+git add .
+git commit -m "Урок 2: Добавил обработку клавиши Escape"
+git push</div>
+                
+                <div class="step" style="margin-top: 20px;">
+                    <h3>✅ Что должно работать:</h3>
+                    <ul class="checklist">
+                        <li>Точка появляется на экране (как в Уроке 1)</li>
+                        <li>При нажатии <span class="key esc">Esc</span> игра завершается</li>
+                        <li>Появляется сообщение о завершении игры</li>
+                        <li>Нет необходимости использовать Ctrl+C</li>
+                        <li>Код сохранён в репозитории</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 10 -->
+        <div class="slide" id="slide10">
+            <div class="slide-content">
+                <h2>🏠 Домашнее задание</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin: 20px 0;">
+                    <div class="step" style="background: rgba(0, 255, 136, 0.1);">
+                        <h3>📝 Уровень 1 (обязательно)</h3>
+                        <ul>
+                            <li>Добавь обработку клавиши <span class="key">Space</span> (пробел)</li>
+                            <li>При нажатии пробела выводи сообщение "ПРОБЕЛ!"</li>
+                            <li>Сделай красивый экран завершения с цветами</li>
+                        </ul>
+                    </div>
+                    <div class="step" style="background: rgba(0, 204, 255, 0.1);">
+                        <h3>⭐ Уровень 2 (повышенный)</h3>
+                        <ul>
+                            <li>Добавь звук при нажатии любой клавиши</li>
+                            <li>Сделай счётчик нажатий (сколько раз нажали клавишу)</li>
+                            <li>Реализуй паузу по нажатию <span class="key">P</span></li>
+                        </ul>
+                    </div>
+                    <div class="step" style="background: rgba(255, 204, 0, 0.1);">
+                        <h3>🏆 Уровень 3 (эксперт)</h3>
+                        <ul>
+                            <li>Создай меню: Enter - начать игру, Esc - выйти</li>
+                            <li>Реализуй обработку комбинаций клавиш (Ctrl+S)</li>
+                            <li>Сделай так, чтобы игра сохраняла "рекорд нажатий"</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="tip">
+                    <strong>💡 Пример для проверки пробела:</strong>
+                    <div class="code-block small">
+if (key == ConsoleKey.Spacebar)
+{
+    Console.WriteLine("ПРОБЕЛ!");
+}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 11 -->
+        <div class="slide" id="slide11">
+            <div class="slide-content">
+                <h2>🚀 Что будет дальше?</h2>
+                <h3>На следующем уроке:</h3>
+                <div class="step">
+                    <p><strong>🎯 Цель:</strong> Объединим игровой цикл и обработку ввода, чтобы создать ДВИЖУЩУЮСЯ точку!</p>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin: 20px 0;">
+                    <div class="step">
+                        <h4>📌 Изучим:</h4>
+                        <ul>
+                            <li>Обработку клавиш WASD и стрелок</li>
+                            <li>Изменение координат при нажатии</li>
+                            <li>Плавное движение точки</li>
+                        </ul>
+                    </div>
+                    <div class="step">
+                        <h4>✅ Получим:</h4>
+                        <ul>
+                            <li>Полностью управляемую точку</li>
+                            <li>Настоящую интерактивную программу</li>
+                            <li>Основу для управления змейкой</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="game-frame" style="margin-top: 15px;">
+                    Сейчас: Точка + выход по Esc<br>
+                    Урок 3: Точка + движение WASD!
+                </div>
+                
+                <p style="color: #00ff88; font-size: 1.3rem; margin-top: 15px;">
+                    Уже завтра у вас будет настоящая управляемая игра!
+                </p>
+            </div>
+        </div>
+
+        <!-- Слайд 12 -->
+        <div class="slide" id="slide12">
+            <div class="slide-content">
+                <h2>🎯 Итоги урока</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin: 20px 0;">
+                    <div class="step">
+                        <h3>✅ Мы научились:</h3>
+                        <ul class="checklist">
+                            <li>Проверять нажатие клавиш (KeyAvailable)</li>
+                            <li>Читать код нажатой клавиши (ReadKey)</li>
+                            <li>Реагировать на конкретные клавиши (Escape)</li>
+                            <li>Управлять выполнением цикла (continue/break)</li>
+                        </ul>
+                    </div>
+                    <div class="step">
+                        <h3>✅ Мы создали:</h3>
+                        <ul class="checklist">
+                            <li>Удобный выход из игры по Esc</li>
+                            <li>Красивый экран завершения</li>
+                            <li>Основу для обработки любых клавиш</li>
+                            <li>Интерактивную программу</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: rgba(255, 204, 0, 0.1); border-radius: 8px;">
+                    <h3 style="color: #ffcc00;">🔑 Ключевой момент:</h3>
+                    <p style="font-size: 1.3rem;">Теперь наша игра не просто демонстрация, а интерактивная программа, которая реагирует на действия пользователя!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 13 -->
+        <div class="slide" id="slide13">
+            <div class="slide-content">
+                <h1>🎉 Урок завершён!</h1>
+                <p style="font-size: 1.4rem; margin: 20px 0; color: #ffcc00;">
+                    "Сегодня вы научили игру слушать!<br>
+                    Теперь программа откликается на ваши команды."
+                </p>
+                <p style="font-size: 1.6rem; color: #00ff88; margin-top: 30px;">
+                    Следующий урок: СОЗДАЁМ ДВИЖУЩУЮСЯ ТОЧКУ<br>
+                    <span style="font-size: 1.8rem;">🎮 Увидимся!</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Навигация -->
+    <div class="navigation">
+        <button class="nav-btn" onclick="showSlide(currentSlide - 1)">
+            <span>◀</span> Назад
+        </button>
+        <button class="nav-btn" onclick="showSlide(currentSlide + 1)">
+            Вперёд <span>▶</span>
+        </button>
+    </div>
+
+    <div class="slide-counter" id="slideCounter">Слайд 1 из 13</div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 13;
+        let startTime = new Date();
+        let timerInterval;
+
+        function init() {
+            updateSlideCounter();
+            updateProgress();
+            startTimer();
+            setupKeyboardNavigation();
+        }
+
+        function showSlide(n) {
+            if (n < 1) n = 1;
+            if (n > totalSlides) n = totalSlides;
+            
+            document.querySelectorAll('.slide').forEach(slide => {
+                slide.classList.remove('active');
+            });
+            
+            document.getElementById(`slide${n}`).classList.add('active');
+            currentSlide = n;
+            
+            updateSlideCounter();
+            updateProgress();
+        }
+
+        function updateSlideCounter() {
+            document.getElementById('slideCounter').textContent = `Слайд ${currentSlide} из ${totalSlides}`;
+        }
+
+        function updateProgress() {
+            const progress = (currentSlide / totalSlides) * 100;
+            document.getElementById('progress').style.width = `${progress}%`;
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                const now = new Date();
+                const diff = Math.floor((now - startTime) / 1000);
+                const minutes = Math.floor(diff / 60);
+                const seconds = diff % 60;
+                document.getElementById('timer').textContent = 
+                    `Время: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function setupKeyboardNavigation() {
+            document.addEventListener('keydown', (e) => {
+                if (!e.target.matches('input, textarea')) {
+                    switch(e.key) {
+                        case 'ArrowLeft':
+                        case 'PageUp':
+                            showSlide(currentSlide - 1);
+                            break;
+                        case 'ArrowRight':
+                        case 'PageDown':
+                        case ' ':
+                            showSlide(currentSlide + 1);
+                            break;
+                        case 'Home':
+                            showSlide(1);
+                            break;
+                        case 'End':
+                            showSlide(totalSlides);
+                            break;
+                    }
+                }
+            });
+        }
+
+        document.querySelector('.presentation-container').addEventListener('click', (e) => {
+            if (!e.target.closest('.nav-btn')) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const middle = rect.width / 2;
+                
+                if (clickX < middle) {
+                    showSlide(currentSlide - 1);
+                } else {
+                    showSlide(currentSlide + 1);
+                }
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

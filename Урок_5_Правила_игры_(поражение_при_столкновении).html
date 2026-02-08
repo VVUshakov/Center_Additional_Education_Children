@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Урок 5: Правила игры | Создание игры Змейка</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .presentation-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            padding: 40px;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            z-index: 10;
+        }
+
+        .slide-content {
+            max-width: 1200px;
+            width: 90%;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 3.2rem;
+            margin-bottom: 20px;
+            color: #ff4444;
+            text-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+            background: linear-gradient(90deg, #ff4444, #ff9966);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #ff9966;
+        }
+
+        h3 {
+            font-size: 1.6rem;
+            margin-bottom: 15px;
+            color: #ffcc00;
+        }
+
+        p {
+            font-size: 1.3rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        ul, ol {
+            text-align: left;
+            font-size: 1.2rem;
+            line-height: 1.5;
+            margin: 15px auto;
+            max-width: 800px;
+            padding-left: 30px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            padding-left: 10px;
+        }
+
+        .code-block {
+            background: #1a1a2e;
+            color: #00ff88;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 1rem;
+            text-align: left;
+            margin: 15px auto;
+            max-width: 800px;
+            border-left: 4px solid #00ff88;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        .code-block.red {
+            border-left: 4px solid #ff4444;
+        }
+
+        .code-block.small {
+            font-size: 0.9rem;
+            padding: 15px;
+        }
+
+        .step {
+            background: rgba(0, 204, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 12px 0;
+            border-left: 4px solid #00ccff;
+        }
+
+        .step.warning {
+            background: rgba(255, 100, 100, 0.1);
+            border-left: 4px solid #ff4444;
+        }
+
+        .checklist {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .checklist li:before {
+            content: "✅ ";
+            margin-right: 10px;
+            color: #00ff88;
+        }
+
+        .checklist.warning li:before {
+            content: "💥 ";
+            color: #ff4444;
+        }
+
+        .warning {
+            background: rgba(255, 100, 100, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #ff4444;
+            margin: 15px 0;
+        }
+
+        .tip {
+            background: rgba(255, 204, 0, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #ffcc00;
+            margin: 15px 0;
+        }
+
+        .success {
+            background: rgba(0, 255, 136, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #00ff88;
+            margin: 15px 0;
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: linear-gradient(135deg, #ff4444, #ff9966);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 10px rgba(255, 68, 68, 0.4);
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(255, 68, 68, 0.6);
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            font-size: 1.1rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 16px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 100;
+        }
+
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #ff4444, #ff9966);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .logo {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #ff4444;
+            z-index: 100;
+        }
+
+        .timer {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            font-size: 1.1rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 16px;
+            border-radius: 15px;
+        }
+
+        .highlight {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+
+        .danger {
+            color: #ff4444;
+            font-weight: bold;
+        }
+
+        .game-over {
+            border: 2px solid #ff4444;
+            padding: 15px;
+            border-radius: 8px;
+            background: #000;
+            display: inline-block;
+            margin: 15px 0;
+            font-family: 'Consolas', monospace;
+            font-size: 1.1rem;
+            color: #ff4444;
+            min-width: 400px;
+            line-height: 1.3;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .border-grid {
+            display: inline-grid;
+            grid-template-columns: repeat(10, 20px);
+            gap: 1px;
+            margin: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            position: relative;
+        }
+
+        .border-cell {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-family: 'Consolas', monospace;
+        }
+
+        .border-cell.wall {
+            background: rgba(0, 204, 255, 0.3);
+            color: #00ccff;
+        }
+
+        .border-cell.player {
+            background: #00ff88;
+            color: #000;
+            font-weight: bold;
+            border-radius: 50%;
+            z-index: 2;
+        }
+
+        .border-cell.crash {
+            background: #ff4444;
+            color: #fff;
+            font-weight: bold;
+            border-radius: 50%;
+            animation: crashPulse 0.5s infinite;
+        }
+
+        @keyframes crashPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .border-cell.empty {
+            background: rgba(255, 255, 255, 0.05);
+            color: #666;
+        }
+
+        .collision-demo {
+            position: relative;
+            width: 400px;
+            height: 200px;
+            margin: 20px auto;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid #444;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .player-dot {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #00ff88;
+            border-radius: 50%;
+            border: 3px solid #fff;
+            transform: translate(-50%, -50%);
+            transition: all 0.5s ease;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.7);
+            z-index: 2;
+        }
+
+        .wall-line {
+            position: absolute;
+            background: rgba(255, 68, 68, 0.7);
+            z-index: 1;
+        }
+
+        .visual-example {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .visual-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            min-width: 180px;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.3rem; }
+            h2 { font-size: 1.6rem; }
+            h3 { font-size: 1.3rem; }
+            p, li { font-size: 1.1rem; }
+            .slide-content { padding: 20px; }
+            .nav-btn { padding: 10px 16px; font-size: 0.9rem; }
+            .code-block { font-size: 0.9rem; padding: 12px; }
+            .collision-demo { width: 300px; height: 150px; }
+            .border-grid { grid-template-columns: repeat(10, 15px); }
+            .border-cell { width: 15px; height: 15px; font-size: 0.7rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">🐍 Урок 5: Правила игры</div>
+    <div class="timer" id="timer">Время: 00:00</div>
+    
+    <div class="progress-bar">
+        <div class="progress" id="progress"></div>
+    </div>
+
+    <div class="presentation-container">
+        <!-- Слайд 1 -->
+        <div class="slide active" id="slide1">
+            <div class="slide-content">
+                <h1>💥 УРОК 5: ПРАВИЛА ИГРЫ</h1>
+                <h2>Добавляем поражение при столкновении</h2>
+                <p style="font-size: 1.4rem; margin-top: 20px; color: #ff9966;">
+                    Сегодня наша игра станет НАСТОЯЩЕЙ — с победой и поражением!
+                </p>
+                <div class="step" style="margin-top: 20px;">
+                    <h3>🎯 Цель урока:</h3>
+                    <p>1. Научить игру распознавать столкновения с границами</p>
+                    <p>2. Добавить условие поражения (Game Over)</p>
+                    <p>3. Создать эффектный экран завершения игры</p>
+                </div>
+                <p style="margin-top: 15px;">Длительность: 1 час 20 минут</p>
+            </div>
+        </div>
+
+        <!-- Слайд 2 -->
+        <div class="slide" id="slide2">
+            <div class="slide-content">
+                <h2>📝 Проверка домашнего задания</h2>
+                <div class="step">
+                    <h3>Быстрая проверка Урока 4:</h3>
+                    <ul class="checklist">
+                        <li>У всех есть красивые границы поля?</li>
+                        <li>Кто изменил цвет границ?</li>
+                        <li>Кто сделал двойную рамку?</li>
+                        <li>Кто добавил внутренние препятствия?</li>
+                    </ul>
+                </div>
+                <div class="game-over" style="margin-top: 15px;">
+                    ПРОБЛЕМА СЕЙЧАС:<br>
+                    Можно бесконечно врезаться в стены —<br>
+                    игра не заканчивается!
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 3 -->
+        <div class="slide" id="slide3">
+            <div class="slide-content">
+                <h2>🎯 Проблема: Игра без правил</h2>
+                <div class="step warning">
+                    <h3>Что не так с текущей игрой?</h3>
+                    <ul class="checklist warning">
+                        <li>Можно бесконечно врезаться в стены</li>
+                        <li>Нет понятия "проигрыш" или "ошибка"</li>
+                        <li>Нет цели для игрока</li>
+                        <li>Нет обратной связи за ошибки</li>
+                    </ul>
+                </div>
+                
+                <div class="tip">
+                    <h3>Решение: Добавим правила игры!</h3>
+                    <p><strong>Первое правило:</strong> Касание границы = поражение</p>
+                    
+                    <div class="border-grid">
+                        <div class="border-cell wall">┌</div>
+                        <div class="border-cell wall">─</div>
+                        <div class="border-cell wall">─</div>
+                        <div class="border-cell wall">─</div>
+                        <div class="border-cell wall">─</div>
+                        <div class="border-cell wall">─</div>
+                        <div class="border-cell wall">─</div>
+                        <div class="border-cell wall">─</div>
+                        <div class="border-cell wall">─</div>
+                        <div class="border-cell wall">┐</div>
+                        
+                        <div class="border-cell wall">│</div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell wall">│</div>
+                        
+                        <div class="border-cell wall">│</div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell wall">│</div>
+                        
+                        <div class="border-cell wall">│</div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell wall">│</div>
+                        
+                        <div class="border-cell wall">│</div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell player">●</div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell empty"></div>
+                        <div class="border-cell wall">│</div>
+                        
+                        <div class="border-cell wall">└</div>
+                        <div class="border-cell wall">─</div>
+                        <div class="border-cell wall">─</div>
+                        <div class="border-cell wall">─</div>
+                        <div class="border-cell wall">─</div>
+                        <div class="border-cell wall">─</div>
+                        <div class="border-cell wall">─</div>
+                        <div class="border-cell wall">─</div>
+                        <div class="border-cell wall">─</div>
+                        <div class="border-cell wall">┘</div>
+                    </div>
+                    
+                    <p style="color: #ff4444; margin-top: 10px;">
+                        ● касается стены → <span class="danger">GAME OVER!</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 4 -->
+        <div class="slide" id="slide4">
+            <div class="slide-content">
+                <h2>🤔 Как определить столкновение?</h2>
+                <p>Логика проста: проверяем координаты игрока</p>
+                
+                <div class="collision-demo" id="collisionDemo">
+                    <!-- Верхняя стена -->
+                    <div class="wall-line" style="top: 20px; left: 0; width: 100%; height: 3px;"></div>
+                    <!-- Нижняя стена -->
+                    <div class="wall-line" style="bottom: 20px; left: 0; width: 100%; height: 3px;"></div>
+                    <!-- Левая стена -->
+                    <div class="wall-line" style="top: 0; left: 20px; width: 3px; height: 100%;"></div>
+                    <!-- Правая стена -->
+                    <div class="wall-line" style="top: 0; right: 20px; width: 3px; height: 100%;"></div>
+                    <!-- Игрок -->
+                    <div class="player-dot" id="demoPlayer" style="left: 50%; top: 50%;"></div>
+                </div>
+                
+                <div class="visual-example" style="margin-top: 20px;">
+                    <div class="visual-box">
+                        <h4>Вертикальные границы</h4>
+                        <p>Левая: <span class="highlight">playerX ≤ 0</span></p>
+                        <p>Правая: <span class="highlight">playerX ≥ FIELD_WIDTH-1</span></p>
+                    </div>
+                    
+                    <div class="visual-box">
+                        <h4>Горизонтальные границы</h4>
+                        <p>Верхняя: <span class="highlight">playerY ≤ BORDER_OFFSET</span></p>
+                        <p>Нижняя: <span class="highlight">playerY ≥ FIELD_HEIGHT + BORDER_OFFSET</span></p>
+                    </div>
+                </div>
+                
+                <div class="code-block red" style="margin-top: 15px;">
+// Проверка столкновения с границами
+bool hitWall = false;
+
+// Проверяем левую и правую границы
+if (playerX <= 0 || playerX >= FIELD_WIDTH - 1)
+{
+    hitWall = true;  // Столкновение!
+}
+
+// Проверяем верхнюю и нижнюю границы
+if (playerY <= BORDER_OFFSET || playerY >= FIELD_HEIGHT + BORDER_OFFSET)
+{
+    hitWall = true;  // Столкновение!
+}
+
+// Если было столкновение - игра окончена
+if (hitWall)
+{
+    isGameRunning = false;
+}</div>
+            </div>
+        </div>
+
+        <!-- Слайд 5 -->
+        <div class="slide" id="slide5">
+            <div class="slide-content">
+                <h2>⚡ ШАГ 1: Добавляем проверку в игровой цикл</h2>
+                <p>Вставляем проверку после обновления позиции игрока:</p>
+                
+                <div class="code-block">
+while (isGameRunning)
+{
+    // 1. Обработка ввода (как раньше)...
+    // 2. Изменение playerX и playerY...
+    
+    // 3. ПРОВЕРКА СТОЛКНОВЕНИЙ (НОВОЕ!)
+    if (playerX <= 0 || playerX >= FIELD_WIDTH - 1 ||
+        playerY <= BORDER_OFFSET || playerY >= FIELD_HEIGHT + BORDER_OFFSET)
+    {
+        isGameRunning = false;
+        continue; // Пропускаем отрисовку
+    }
+    
+    // 4. Отрисовка...
+    // 5. Пауза...
+}</div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Где именно проверять?</h3>
+                    <ol>
+                        <li><strong>После обработки ввода</strong> — когда координаты уже изменились</li>
+                        <li><strong>Перед отрисовкой</strong> — чтобы не рисовать кадр, если игра окончена</li>
+                        <li><strong>Используем continue</strong> — чтобы пропустить отрисовку при Game Over</li>
+                    </ol>
+                </div>
+                
+                <div class="warning">
+                    <strong>⚠️ Важно:</strong> Проверяем НОВЫЕ координаты игрока,<br>
+                    а не старые! Иначе столкновение обнаружится с опозданием.
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 6 -->
+        <div class="slide" id="slide6">
+            <div class="slide-content">
+                <h2>🎭 ШАГ 2: Создаём эффектный Game Over</h2>
+                <p>Делаем завершение игры запоминающимся:</p>
+                
+                <div class="code-block red">
+// После выхода из игрового цикла
+Console.Clear();
+Console.ForegroundColor = ConsoleColor.Red;
+
+// Анимация проигрыша (мигание)
+for (int i = 0; i < 3; i++)
+{
+    Console.Clear();
+    Console.SetCursorPosition(10, 5);
+    Console.Write("💥 ИГРА ОКОНЧЕНА! 💥");
+    
+    Thread.Sleep(300);  // Пауза
+    
+    Console.Clear();
+    Thread.Sleep(300);  // Пауза
+}
+
+// Финальный экран
+Console.ForegroundColor = ConsoleColor.Yellow;
+Console.SetCursorPosition(8, 5);
+Console.WriteLine("=== ИГРА ОКОНЧЕНА ===");
+Console.SetCursorPosition(5, 7);
+Console.WriteLine("Вы врезались в стену!");
+Console.SetCursorPosition(5, 9);
+Console.WriteLine("Следующий раз будьте осторожнее!");
+Console.ResetColor();
+
+Console.SetCursorPosition(5, 12);
+Console.WriteLine("Нажмите любую клавишу...");
+Console.ReadKey();</div>
+                
+                <div class="tip" style="margin-top: 15px;">
+                    <strong>💡 Можно добавить звук!</strong>
+                    <div class="code-block small">
+// Вместе с миганием
+Console.Beep(200, 300);  // Низкий звук - авария
+Console.Beep(150, 400);  // Ещё ниже - катастрофа</div>
+                </div>
+                
+                <div class="game-over" style="margin-top: 15px;">
+                    💥 ИГРА ОКОНЧЕНА! 💥<br>
+                    Вы врезались в стену!<br>
+                    Следующий раз будьте осторожнее!
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 7 -->
+        <div class="slide" id="slide7">
+            <div class="slide-content">
+                <h2>🔄 ШАГ 3: Полный код с правилами</h2>
+                <p>Объединяем всё вместе:</p>
+                
+                <div class="code-block" style="font-size: 0.9rem; max-height: 400px; overflow-y: auto;">
+using System;
+using System.Threading;
+
+namespace SnakeGame
+{
+    class Program
+    {
+        const int FIELD_WIDTH = 30;
+        const int FIELD_HEIGHT = 15;
+        const int BORDER_OFFSET = 2;
+        
+        static void DrawBorders() { /* код из Урока 4 */ }
+        
+        static void Main(string[] args)
+        {
+            int playerX = FIELD_WIDTH / 2;
+            int playerY = FIELD_HEIGHT / 2 + BORDER_OFFSET;
+            bool isGameRunning = true;
+            
+            Console.WriteLine("=== ИГРА С ПРАВИЛАМИ ===");
+            Console.WriteLine("Цель: избегать стен!");
+            Console.WriteLine("Касание стены = поражение");
+            Thread.Sleep(3000);
+            Console.Clear();
+            
+            while (isGameRunning)
+            {
+                // Обработка ввода (WASD и Esc)...
+                
+                // ПРОВЕРКА СТОЛКНОВЕНИЙ С ГРАНИЦАМИ
+                if (playerX <= 0 || playerX >= FIELD_WIDTH - 1 ||
+                    playerY <= BORDER_OFFSET || playerY >= FIELD_HEIGHT + BORDER_OFFSET)
+                {
+                    isGameRunning = false;
+                    continue;
+                }
+                
+                // Отрисовка
+                Console.Clear();
+                DrawBorders();
+                
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.SetCursorPosition(playerX, playerY);
+                Console.Write("●");
+                Console.ResetColor();
+                
+                Thread.Sleep(100);
+            }
+            
+            // ЭФФЕКТНЫЙ GAME OVER
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("💥 ИГРА ОКОНЧЕНА! 💥");
+            Console.WriteLine("Вы врезались в стену!");
+            Console.ResetColor();
+            Console.ReadKey();
+        }
+    }
+}</div>
+                
+                <div class="success" style="margin-top: 15px;">
+                    <strong>🎯 Теперь у игры есть цель:</strong><br>
+                    Избегать стен как можно дольше!<br>
+                    Игрок получает обратную связь за ошибки.
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 8 -->
+        <div class="slide" id="slide8">
+            <div class="slide-content">
+                <h2>👁️ Тестируем результат</h2>
+                <p>Что должно получиться:</p>
+                
+                <div class="border-grid" style="position: relative;">
+                    <div class="border-cell wall">┌</div>
+                    <div class="border-cell wall">─</div>
+                    <div class="border-cell wall">─</div>
+                    <div class="border-cell wall">─</div>
+                    <div class="border-cell wall">─</div>
+                    <div class="border-cell wall">─</div>
+                    <div class="border-cell wall">─</div>
+                    <div class="border-cell wall">─</div>
+                    <div class="border-cell wall">─</div>
+                    <div class="border-cell wall">┐</div>
+                    
+                    <div class="border-cell wall">│</div>
+                    <div class="border-cell empty"></div>
+                    <div class="border-cell empty"></div>
+                    <div class="border-cell empty"></div>
+                    <div class="border-cell empty"></div>
+                    <div class="border-cell empty"></div>
+                    <div class="border-cell empty"></div>
+                    <div class="border-cell empty"></div>
+                    <div class="border-cell empty"></div>
+                    <div class="border-cell wall">│</div>
+                    
+                    <div class="border-cell wall">│</div>
+                    <div class="border-cell empty"></div>
+                    <div class="border-cell empty"></div>
+                    <div class="border-cell empty"></div>
+                    <div class="border-cell crash">●</div>
+                    <div class="border-cell wall">│</div>
+                    <div class="border-cell empty"></div>
+                    <div class="border-cell empty"></div>
+                    <div class="border-cell empty"></div>
+                    <div class="border-cell wall">│</div>
+                    
+                    <div class="border-cell wall">│</div>
+                    <div class="border-cell empty"></div>
+                    <div class="border-cell empty"></div>
+                    <div class="border-cell empty"></div>
+                    <div class="border-cell empty"></div>
+                    <div class="border-cell empty"></div>
+                    <div class="border-cell empty"></div>
+                    <div class="border-cell empty"></div>
+                    <div class="border-cell empty"></div>
+                    <div class="border-cell wall">│</div>
+                    
+                    <div class="border-cell wall">└</div>
+                    <div class="border-cell wall">─</div>
+                    <div class="border-cell wall">─</div>
+                    <div class="border-cell wall">─</div>
+                    <div class="border-cell wall">─</div>
+                    <div class="border-cell wall">─</div>
+                    <div class="border-cell wall">─</div>
+                    <div class="border-cell wall">─</div>
+                    <div class="border-cell wall">─</div>
+                    <div class="border-cell wall">┘</div>
+                </div>
+                
+                <div style="margin-top: 15px;">
+                    <p><span class="danger">● касается стены →</span></p>
+                    <div class="game-over" style="margin: 10px auto; width: 80%;">
+                        💥 ИГРА ОКОНЧЕНА! 💥<br>
+                        Вы врезались в стену!
+                    </div>
+                </div>
+                
+                <div class="tip">
+                    <strong>✅ Критерии успеха:</strong>
+                    <ul class="checklist">
+                        <li>При касании стены игра заканчивается</li>
+                        <li>Появляется сообщение "Игра окончена"</li>
+                        <li>Игрок понимает, что совершил ошибку</li>
+                        <li>Можно начать заново (перезапустить программу)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 9 -->
+        <div class="slide" id="slide9">
+            <div class="slide-content">
+                <h2>⚡ Улучшение: Разные причины поражения</h2>
+                <p>Можно определить, в какую именно стену врезались:</p>
+                
+                <div class="code-block red">
+// Более подробная проверка
+string crashReason = "";
+
+if (playerX <= 0)
+    crashReason = "левую стену";
+else if (playerX >= FIELD_WIDTH - 1)
+    crashReason = "правую стену";
+else if (playerY <= BORDER_OFFSET)
+    crashReason = "верхнюю стену";
+else if (playerY >= FIELD_HEIGHT + BORDER_OFFSET)
+    crashReason = "нижнюю стену";
+
+if (!string.IsNullOrEmpty(crashReason))
+{
+    isGameRunning = false;
+    
+    // Более информативное сообщение
+    Console.WriteLine($"Вы врезались в {crashReason}!");
+}</div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Можно добавить разные звуки:</h3>
+                    <div class="code-block small">
+if (playerX <= 0 || playerX >= FIELD_WIDTH - 1)
+    Console.Beep(300, 200);  // Высокий звук для боковых стен
+    
+if (playerY <= BORDER_OFFSET || playerY >= FIELD_HEIGHT + BORDER_OFFSET)
+    Console.Beep(200, 300);  // Низкий звук для верхней/нижней стен</div>
+                </div>
+                
+                <div class="tip">
+                    <strong>💡 Почему это полезно:</strong><br>
+                    1. Игрок лучше понимает, что произошло<br>
+                    2. Можно собирать статистику (в какую стену чаще врезаются)<br>
+                    3. Игра становится более "умной" и отзывчивой
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 10 -->
+        <div class="slide" id="slide10">
+            <div class="slide-content">
+                <h2>💾 Сохраняем результат</h2>
+                <div class="code-block small" style="text-align: center;">
+git add .
+git commit -m "Урок 5: Добавил правила игры - поражение при столкновении"
+git push</div>
+                
+                <div class="step" style="margin-top: 20px;">
+                    <h3>✅ Что должно работать:</h3>
+                    <ul class="checklist">
+                        <li>Точка двигается внутри границ</li>
+                        <li>При касании границы игра заканчивается</li>
+                        <li>Появляется эффектный экран Game Over</li>
+                        <li>Можно выйти по Esc в любой момент</li>
+                        <li>Код сохранён в репозитории</li>
+                    </ul>
+                </div>
+                
+                <div class="success">
+                    <strong>🎉 Поздравляем!</strong><br>
+                    Теперь у вас НАСТОЯЩАЯ игра с правилами и целями!
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 11 -->
+        <div class="slide" id="slide11">
+            <div class="slide-content">
+                <h2>🏠 Домашнее задание</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin: 20px 0;">
+                    <div class="step" style="background: rgba(255, 68, 68, 0.1);">
+                        <h3>📝 Уровень 1 (обязательно)</h3>
+                        <ul>
+                            <li>Добавь звук при столкновении со стеной</li>
+                            <li>Сделай мигающий экран Game Over</li>
+                            <li>Определи, в какую именно стену врезались</li>
+                        </ul>
+                    </div>
+                    <div class="step" style="background: rgba(255, 153, 102, 0.1);">
+                        <h3>⭐ Уровень 2 (повышенный)</h3>
+                        <ul>
+                            <li>Сделай "предупреждение" при приближении к стене</li>
+                            <li>Добавь счётчик "времени выживания"</li>
+                            <li>Реализуй возможность рестарта игры</li>
+                        </ul>
+                    </div>
+                    <div class="step" style="background: rgba(255, 204, 0, 0.1);">
+                        <h3>🏆 Уровень 3 (эксперт)</h3>
+                        <ul>
+                            <li>Создай таблицу рекордов (лучшее время)</li>
+                            <li>Добавь разные уровни сложности (скорость игры)</li>
+                            <li>Реализуй "щит" — временную защиту от столкновений</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="tip">
+                    <strong>💡 Пример для предупреждения:</strong>
+                    <div class="code-block small">
+// Если близко к левой стене
+if (playerX == 1)
+{
+    Console.Beep(800, 100);  // Высокий предупреждающий звук
+}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 12 -->
+        <div class="slide" id="slide12">
+            <div class="slide-content">
+                <h2>🚀 Что будет дальше?</h2>
+                <h3>На следующем уроке:</h3>
+                <div class="step">
+                    <p><strong>🎯 Цель:</strong> Добавить систему счёта и информационную панель!</p>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin: 20px 0;">
+                    <div class="step">
+                        <h4>📌 Изучим:</h4>
+                        <ul>
+                            <li>Как вести счёт в игре</li>
+                            <li>Создание информационной панели</li>
+                            <li>Отображение статистики игрока</li>
+                        </ul>
+                    </div>
+                    <div class="step">
+                        <h4>✅ Получим:</h4>
+                        <ul>
+                            <li>Игру с очками и прогрессом</li>
+                            <li>Профессиональный интерфейс</li>
+                            <li>Мотивацию для улучшения результата</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="game-over" style="margin-top: 15px; color: #00ff88; border-color: #00ff88;">
+                    Сейчас: Просто выживание<br>
+                    Урок 6: Счёт + время + прогресс!
+                </div>
+                
+                <p style="color: #00ff88; font-size: 1.3rem; margin-top: 15px;">
+                    Уже завтра ваша игра станет ещё более профессиональной!
+                </p>
+            </div>
+        </div>
+
+        <!-- Слайд 13 -->
+        <div class="slide" id="slide13">
+            <div class="slide-content">
+                <h2>🎯 Итоги урока</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin: 20px 0;">
+                    <div class="step">
+                        <h3>✅ Мы научились:</h3>
+                        <ul class="checklist">
+                            <li>Проверять столкновения с границами</li>
+                            <li>Создавать условия поражения в игре</li>
+                            <li>Делать эффектные экраны завершения</li>
+                            <li>Добавлять обратную связь за ошибки</li>
+                        </ul>
+                    </div>
+                    <div class="step">
+                        <h3>✅ Мы создали:</h3>
+                        <ul class="checklist">
+                            <li>Настоящие правила игры</li>
+                            <li>Цель для игрока (избегать стен)</li>
+                            <li>Эмоциональную реакцию на ошибки</li>
+                            <li>Завершённый игровой цикл</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: rgba(255, 68, 68, 0.1); border-radius: 8px;">
+                    <h3 style="color: #ff4444;">🎮 Главное достижение:</h3>
+                    <p style="font-size: 1.3rem;">Теперь это НАСТОЯЩАЯ игра с победой и поражением, а не просто демонстрация!</p>
+                    <p style="font-size: 1.1rem; color: #ffcc00; margin-top: 10px;">Игрок получает эмоции: азарт, осторожность, сожаление при ошибке!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 14 -->
+        <div class="slide" id="slide14">
+            <div class="slide-content">
+                <h1>🎉 Урок завершён!</h1>
+                <p style="font-size: 1.4rem; margin: 20px 0; color: #ffcc00;">
+                    "Сегодня вы превратили красивую демонстрацию в НАСТОЯЩУЮ игру!<br>
+                    Теперь у вашего творения есть душа — правила и эмоции."
+                </p>
+                <p style="font-size: 1.6rem; color: #00ff88; margin-top: 30px;">
+                    Следующий урок: СИСТЕМА СЧЁТА И ИНТЕРФЕЙС<br>
+                    <span style="font-size: 1.8rem;">🏆 Увидимся!</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Навигация -->
+    <div class="navigation">
+        <button class="nav-btn" onclick="showSlide(currentSlide - 1)">
+            <span>◀</span> Назад
+        </button>
+        <button class="nav-btn" onclick="showSlide(currentSlide + 1)">
+            Вперёд <span>▶</span>
+        </button>
+    </div>
+
+    <div class="slide-counter" id="slideCounter">Слайд 1 из 14</div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 14;
+        let startTime = new Date();
+        let timerInterval;
+        let demoAnimation;
+
+        function init() {
+            updateSlideCounter();
+            updateProgress();
+            startTimer();
+            setupKeyboardNavigation();
+            initCollisionDemo();
+        }
+
+        function showSlide(n) {
+            if (n < 1) n = 1;
+            if (n > totalSlides) n = totalSlides;
+            
+            document.querySelectorAll('.slide').forEach(slide => {
+                slide.classList.remove('active');
+            });
+            
+            document.getElementById(`slide${n}`).classList.add('active');
+            currentSlide = n;
+            
+            updateSlideCounter();
+            updateProgress();
+            
+            // Останавливаем предыдущую анимацию
+            if (demoAnimation) {
+                clearInterval(demoAnimation);
+            }
+            
+            // Запускаем анимацию для слайда 4
+            if (n === 4) {
+                startCollisionDemo();
+            }
+        }
+
+        function updateSlideCounter() {
+            document.getElementById('slideCounter').textContent = `Слайд ${currentSlide} из ${totalSlides}`;
+        }
+
+        function updateProgress() {
+            const progress = (currentSlide / totalSlides) * 100;
+            document.getElementById('progress').style.width = `${progress}%`;
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                const now = new Date();
+                const diff = Math.floor((now - startTime) / 1000);
+                const minutes = Math.floor(diff / 60);
+                const seconds = diff % 60;
+                document.getElementById('timer').textContent = 
+                    `Время: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function setupKeyboardNavigation() {
+            document.addEventListener('keydown', (e) => {
+                if (!e.target.matches('input, textarea')) {
+                    switch(e.key) {
+                        case 'ArrowLeft':
+                        case 'PageUp':
+                            showSlide(currentSlide - 1);
+                            break;
+                        case 'ArrowRight':
+                        case 'PageDown':
+                        case ' ':
+                            showSlide(currentSlide + 1);
+                            break;
+                        case 'Home':
+                            showSlide(1);
+                            break;
+                        case 'End':
+                            showSlide(totalSlides);
+                            break;
+                    }
+                }
+            });
+        }
+
+        function initCollisionDemo() {
+            // Создаем игрока в демонстрации
+            const demo = document.getElementById('collisionDemo');
+            if (!demo) return;
+            
+            const player = document.getElementById('demoPlayer');
+            if (!player) return;
+            
+            // Устанавливаем начальную позицию
+            player.style.left = '50%';
+            player.style.top = '50%';
+        }
+
+        function startCollisionDemo() {
+            const player = document.getElementById('demoPlayer');
+            if (!player) return;
+            
+            let direction = 1; // 1 = вправо, 2 = вниз, 3 = влево, 4 = вверх
+            let posX = 50;
+            let posY = 50;
+            let speed = 0.5;
+            
+            demoAnimation = setInterval(() => {
+                // Двигаем игрока
+                switch(direction) {
+                    case 1: // Вправо
+                        posX += speed;
+                        if (posX >= 90) {
+                            direction = 2;
+                            player.style.background = '#ff4444';
+                            setTimeout(() => player.style.background = '#00ff88', 200);
+                        }
+                        break;
+                    case 2: // Вниз
+                        posY += speed;
+                        if (posY >= 90) {
+                            direction = 3;
+                            player.style.background = '#ff4444';
+                            setTimeout(() => player.style.background = '#00ff88', 200);
+                        }
+                        break;
+                    case 3: // Влево
+                        posX -= speed;
+                        if (posX <= 10) {
+                            direction = 4;
+                            player.style.background = '#ff4444';
+                            setTimeout(() => player.style.background = '#00ff88', 200);
+                        }
+                        break;
+                    case 4: // Вверх
+                        posY -= speed;
+                        if (posY <= 10) {
+                            direction = 1;
+                            player.style.background = '#ff4444';
+                            setTimeout(() => player.style.background = '#00ff88', 200);
+                        }
+                        break;
+                }
+                
+                // Обновляем позицию
+                player.style.left = `${posX}%`;
+                player.style.top = `${posY}%`;
+                
+            }, 20);
+        }
+
+        document.querySelector('.presentation-container').addEventListener('click', (e) => {
+            if (!e.target.closest('.nav-btn')) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const middle = rect.width / 2;
+                
+                if (clickX < middle) {
+                    showSlide(currentSlide - 1);
+                } else {
+                    showSlide(currentSlide + 1);
+                }
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

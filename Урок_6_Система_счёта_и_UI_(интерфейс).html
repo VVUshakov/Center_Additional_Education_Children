@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Урок 6: Система счёта | Создание игры Змейка</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .presentation-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            padding: 40px;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            z-index: 10;
+        }
+
+        .slide-content {
+            max-width: 1200px;
+            width: 90%;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 3.2rem;
+            margin-bottom: 20px;
+            color: #ffcc00;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+            background: linear-gradient(90deg, #ffcc00, #ff9966);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #00ccff;
+        }
+
+        h3 {
+            font-size: 1.6rem;
+            margin-bottom: 15px;
+            color: #00ff88;
+        }
+
+        p {
+            font-size: 1.3rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        ul, ol {
+            text-align: left;
+            font-size: 1.2rem;
+            line-height: 1.5;
+            margin: 15px auto;
+            max-width: 800px;
+            padding-left: 30px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            padding-left: 10px;
+        }
+
+        .code-block {
+            background: #1a1a2e;
+            color: #00ff88;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 1rem;
+            text-align: left;
+            margin: 15px auto;
+            max-width: 800px;
+            border-left: 4px solid #00ff88;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        .code-block.yellow {
+            border-left: 4px solid #ffcc00;
+        }
+
+        .code-block.small {
+            font-size: 0.9rem;
+            padding: 15px;
+        }
+
+        .step {
+            background: rgba(0, 204, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 12px 0;
+            border-left: 4px solid #00ccff;
+        }
+
+        .step.gold {
+            background: rgba(255, 204, 0, 0.1);
+            border-left: 4px solid #ffcc00;
+        }
+
+        .checklist {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .checklist li:before {
+            content: "✅ ";
+            margin-right: 10px;
+            color: #00ff88;
+        }
+
+        .checklist.gold li:before {
+            content: "💰 ";
+            color: #ffcc00;
+        }
+
+        .warning {
+            background: rgba(255, 100, 100, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #ff6666;
+            margin: 15px 0;
+        }
+
+        .tip {
+            background: rgba(255, 204, 0, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #ffcc00;
+            margin: 15px 0;
+        }
+
+        .success {
+            background: rgba(0, 255, 136, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #00ff88;
+            margin: 15px 0;
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: linear-gradient(135deg, #ffcc00, #ff9966);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 10px rgba(255, 204, 0, 0.4);
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(255, 204, 0, 0.6);
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            font-size: 1.1rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 16px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 100;
+        }
+
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #ffcc00, #ff9966);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .logo {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #ffcc00;
+            z-index: 100;
+        }
+
+        .timer {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            font-size: 1.1rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 16px;
+            border-radius: 15px;
+        }
+
+        .highlight {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+
+        .gold-text {
+            color: #ffcc00;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(255, 204, 0, 0.5);
+        }
+
+        .score-display {
+            border: 2px solid #ffcc00;
+            padding: 15px;
+            border-radius: 8px;
+            background: #000;
+            display: inline-block;
+            margin: 15px 0;
+            font-family: 'Consolas', monospace;
+            font-size: 1.1rem;
+            color: #ffcc00;
+            min-width: 400px;
+            line-height: 1.3;
+        }
+
+        .game-interface {
+            font-family: 'Consolas', monospace;
+            background: #000;
+            border: 2px solid #444;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 15px auto;
+            max-width: 400px;
+            text-align: left;
+            color: #fff;
+        }
+
+        .interface-header {
+            color: #00ccff;
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+
+        .interface-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+        }
+
+        .interface-label {
+            color: #aaa;
+        }
+
+        .interface-value {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+
+        .counter-animation {
+            font-size: 3rem;
+            color: #ffcc00;
+            margin: 20px 0;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+        }
+
+        .counter-digit {
+            display: inline-block;
+            animation: counterPop 0.5s ease;
+        }
+
+        @keyframes counterPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+
+        .visual-example {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .visual-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            min-width: 180px;
+        }
+
+        .score-meter {
+            width: 300px;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid #444;
+            border-radius: 15px;
+            margin: 15px auto;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .score-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #ffcc00);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 13px;
+        }
+
+        .score-label {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            color: #000;
+            text-shadow: 0 0 2px #fff;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.3rem; }
+            h2 { font-size: 1.6rem; }
+            h3 { font-size: 1.3rem; }
+            p, li { font-size: 1.1rem; }
+            .slide-content { padding: 20px; }
+            .nav-btn { padding: 10px 16px; font-size: 0.9rem; }
+            .code-block { font-size: 0.9rem; padding: 12px; }
+            .score-display, .game-interface { min-width: 300px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">🐍 Урок 6: Система счёта</div>
+    <div class="timer" id="timer">Время: 00:00</div>
+    
+    <div class="progress-bar">
+        <div class="progress" id="progress"></div>
+    </div>
+
+    <div class="presentation-container">
+        <!-- Слайд 1 -->
+        <div class="slide active" id="slide1">
+            <div class="slide-content">
+                <h1>🏆 УРОК 6: СИСТЕМА СЧЁТА</h1>
+                <h2>Добавляем прогресс и интерфейс</h2>
+                <p style="font-size: 1.4rem; margin-top: 20px; color: #00ccff;">
+                    Сегодня сделаем нашу игру профессиональной и мотивирующей!
+                </p>
+                <div class="step" style="margin-top: 20px;">
+                    <h3>🎯 Цель урока:</h3>
+                    <p>1. Создать систему начисления очков</p>
+                    <p>2. Добавить информационную панель с интерфейсом</p>
+                    <p>3. Сделать игру более интересной и соревновательной</p>
+                </div>
+                <p style="margin-top: 15px;">Длительность: 1 час 20 минут</p>
+            </div>
+        </div>
+
+        <!-- Слайд 2 -->
+        <div class="slide" id="slide2">
+            <div class="slide-content">
+                <h2>📝 Проверка домашнего задания</h2>
+                <div class="step">
+                    <h3>Быстрая проверка Урока 5:</h3>
+                    <ul class="checklist">
+                        <li>У всех игра заканчивается при касании стен?</li>
+                        <li>Кто добавил звук при столкновении?</li>
+                        <li>Кто сделал мигающий экран Game Over?</li>
+                        <li>Кто определил, в какую стену врезались?</li>
+                    </ul>
+                </div>
+                <div class="score-display" style="margin-top: 15px;">
+                    ПРОБЛЕМА СЕЙЧАС:<br>
+                    Игрок не видит своего прогресса!<br>
+                    Нет цели "набрать больше очков"
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 3 -->
+        <div class="slide" id="slide3">
+            <div class="slide-content">
+                <h2>🎯 Зачем нужна система счёта?</h2>
+                <div class="step">
+                    <h3>Проблема текущей игры:</h3>
+                    <ul>
+                        <li>Игрок не видит свой прогресс</li>
+                        <li>Нет мотивации играть дольше</li>
+                        <li>Нельзя сравнивать результаты разных попыток</li>
+                        <li>Игра кажется "бесцельной"</li>
+                    </ul>
+                </div>
+                
+                <div class="tip">
+                    <h3>Решение: Добавим очки и информационную панель!</h3>
+                    
+                    <div class="game-interface">
+                        <div class="interface-header">=== ЗМЕЙКА ===</div>
+                        <div class="interface-row">
+                            <span class="interface-label">Счёт:</span>
+                            <span class="interface-value" id="demoScore">0</span>
+                        </div>
+                        <div class="interface-row">
+                            <span class="interface-label">Время:</span>
+                            <span class="interface-value">00:15</span>
+                        </div>
+                        <div class="interface-row">
+                            <span class="interface-label">Позиция:</span>
+                            <span class="interface-value">(15, 8)</span>
+                        </div>
+                        <div class="interface-row">
+                            <span class="interface-label">Рекорд:</span>
+                            <span class="interface-value">125</span>
+                        </div>
+                    </div>
+                    
+                    <p><strong>Что это даст игроку:</strong></p>
+                    <ul class="checklist gold">
+                        <li> Видимый прогресс и достижения</li>
+                        <li> Мотивация "побить свой рекорд"</li>
+                        <li> Возможность сравнивать с друзьями</li>
+                        <li> Ощущение роста и развития</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 4 -->
+        <div class="slide" id="slide4">
+            <div class="slide-content">
+                <h2>💰 ШАГ 1: Создаём переменную для счёта</h2>
+                <p>Добавляем новую переменную и константы:</p>
+                
+                <div class="code-block yellow">
+// Дополняем существующие константы
+const int FIELD_WIDTH = 30;
+const int FIELD_HEIGHT = 15;
+const int BORDER_OFFSET = 2;
+const int GAME_SPEED = 100;          // Задержка между кадрами (мс)
+const int SCORE_PER_SECOND = 1;      // Очков в секунду
+
+// Добавляем новую переменную
+int score = 0;  // Начинаем с нуля очков
+int frameCounter = 0;  // Счётчик кадров для времени</div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Как работает счёт?</h3>
+                    <p>Будем начислять очки за время выживания:</p>
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin: 10px 0;">
+                        <div class="visual-box">
+                            Каждые 10 кадров<br>(при GAME_SPEED = 100)<br>= 1 секунда
+                        </div>
+                        <div style="font-size: 2rem;">→</div>
+                        <div class="visual-box">
+                            +1 очко<br>за каждую секунду<br>выживания
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="counter-animation" id="scoreCounter">
+                    <span class="counter-digit">0</span>
+                </div>
+                
+                <script>
+                    function animateScoreCounter() {
+                        const counter = document.getElementById('scoreCounter');
+                        if (!counter) return;
+                        
+                        let score = 0;
+                        const interval = setInterval(() => {
+                            score++;
+                            counter.innerHTML = `<span class="counter-digit">${score}</span>`;
+                            
+                            if (score >= 10) {
+                                clearInterval(interval);
+                            }
+                        }, 300);
+                    }
+                </script>
+            </div>
+        </div>
+
+        <!-- Слайд 5 -->
+        <div class="slide" id="slide5">
+            <div class="slide-content">
+                <h2>⏱️ ШАГ 2: Начисляем очки за время</h2>
+                <p>Добавляем логику в игровой цикл:</p>
+                
+                <div class="code-block yellow">
+while (isGameRunning)
+{
+    // Обработка ввода...
+    // Проверка столкновений...
+    
+    // --- ОБНОВЛЕНИЕ СЧЁТА (НОВОЕ!) ---
+    frameCounter++;  // Увеличиваем счётчик кадров
+    
+    // Каждые 10 кадров (≈1 секунда) добавляем очко
+    if (frameCounter >= 10)
+    {
+        score += SCORE_PER_SECOND;  // +1 очко
+        frameCounter = 0;           // Сбрасываем счётчик
+        
+        // Можно добавить звук или эффект
+        // Console.Beep(800, 50); // Высокий звук за очко
+    }
+    // --- КОНЕЦ ОБНОВЛЕНИЯ СЧЁТА ---
+    
+    // Отрисовка...
+    // Пауза...
+}</div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Как это работает математически?</h3>
+                    <div class="visual-example">
+                        <div class="visual-box">
+                            <h4>GAME_SPEED = 100</h4>
+                            <p>1 кадр = 100мс</p>
+                            <p>10 кадров = 1000мс = 1 секунда</p>
+                        </div>
+                        <div class="visual-box">
+                            <h4>SCORE_PER_SECOND = 1</h4>
+                            <p>1 очко в секунду</p>
+                            <p>60 очков в минуту</p>
+                        </div>
+                    </div>
+                    
+                    <div class="warning">
+                        <strong>⚡ Можно менять баланс игры:</strong><br>
+                        • Увеличить SCORE_PER_SECOND для более быстрого набора<br>
+                        • Уменьшить GAME_SPEED для более сложной игры<br>
+                        • Сделать очки за что-то ещё (например, за повороты)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 6 -->
+        <div class="slide" id="slide6">
+            <div class="slide-content">
+                <h2>🖥️ ШАГ 3: Создаём информационную панель</h2>
+                <p>Метод для отображения информации вверху экрана:</p>
+                
+                <div class="code-block yellow">
+void DrawInfoPanel(int score, int playerX, int playerY, int seconds)
+{
+    // Сохраняем текущую позицию курсора
+    int savedLeft = Console.CursorLeft;
+    int savedTop = Console.CursorTop;
+    
+    // Рисуем вверху экрана
+    Console.SetCursorPosition(0, 0);
+    Console.ForegroundColor = ConsoleColor.White;
+    
+    Console.WriteLine("=== ЗМЕЙКА (версия с точкой) ===");
+    Console.WriteLine($"Счёт: {score} | Время: {seconds} сек. | Позиция: ({playerX},{playerY})");
+    Console.WriteLine("Управление: WASD/стрелки | Выход: Esc");
+    
+    // Разделитель
+    Console.WriteLine(new string('─', FIELD_WIDTH));
+    
+    Console.ResetColor();
+    
+    // Возвращаем курсор на сохранённую позицию
+    Console.SetCursorPosition(savedLeft, savedTop);
+}</div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Что показывает панель?</h3>
+                    <div class="game-interface" style="max-width: 500px;">
+                        <div class="interface-header">=== ЗМЕЙКА (версия с точкой) ===</div>
+                        <div class="interface-row">
+                            <span class="interface-label">Счёт:</span>
+                            <span class="interface-value">15</span>
+                            <span class="interface-label">Время:</span>
+                            <span class="interface-value">15 сек.</span>
+                            <span class="interface-label">Позиция:</span>
+                            <span class="interface-value">(15, 8)</span>
+                        </div>
+                        <div class="interface-row">
+                            <span class="interface-label" style="color: #aaa;">Управление: WASD/стрелки | Выход: Esc</span>
+                        </div>
+                        <div style="border-top: 1px solid #444; margin: 5px 0;"></div>
+                    </div>
+                    
+                    <p><strong>Важно:</strong> Сохраняем и восстанавливаем позицию курсора, чтобы не сломать отрисовку игры!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 7 -->
+        <div class="slide" id="slide7">
+            <div class="slide-content">
+                <h2>🔄 ШАГ 4: Интегрируем всё в игровой цикл</h2>
+                <p>Обновляем основной цикл игры:</p>
+                
+                <div class="code-block" style="font-size: 0.9rem; max-height: 350px; overflow-y: auto;">
+while (isGameRunning)
+{
+    // 1. Обработка ввода...
+    
+    // 2. Проверка столкновений...
+    
+    // 3. Обновление счёта
+    frameCounter++;
+    if (frameCounter >= 10)  // Каждую секунду
+    {
+        score++;
+        frameCounter = 0;
+    }
+    
+    // 4. Расчёт времени игры (в секундах)
+    int gameTimeSeconds = score;  // У нас 1 очко = 1 секунда
+    
+    // 5. Очистка экрана
+    Console.Clear();
+    
+    // 6. Рисование информационной панели (НОВОЕ!)
+    DrawInfoPanel(score, playerX, playerY, gameTimeSeconds);
+    
+    // 7. Рисование границ (как раньше)
+    DrawBorders();
+    
+    // 8. Рисование игрока
+    Console.ForegroundColor = ConsoleColor.Green;
+    Console.SetCursorPosition(playerX, playerY);
+    Console.Write("●");
+    Console.ResetColor();
+    
+    // 9. Пауза
+    Thread.Sleep(GAME_SPEED);
+}</div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Что изменилось в порядке отрисовки?</h3>
+                    <ol>
+                        <li><strong>Раньше:</strong> Clear() → DrawBorders() → DrawPlayer()</li>
+                        <li><strong>Теперь:</strong> Clear() → DrawInfoPanel() → DrawBorders() → DrawPlayer()</li>
+                    </ol>
+                    
+                    <div class="tip">
+                        <strong>💡 Почему InfoPanel рисуется ПЕРЕД Borders?</strong><br>
+                        Чтобы информационная панель была ВНЕ игрового поля.<br>
+                        Игровое поле (с границами) начинается после панели.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 8 -->
+        <div class="slide" id="slide8">
+            <div class="slide-content">
+                <h2>👁️ ШАГ 5: Тестируем результат</h2>
+                <p>Что должно получиться:</p>
+                
+                <div class="game-interface" style="max-width: 450px; margin: 20px auto;">
+                    <div class="interface-header">=== ЗМЕЙКА (версия с точкой) ===</div>
+                    <div class="interface-row">
+                        <span class="interface-label">Счёт:</span>
+                        <span class="interface-value">25</span>
+                        <span class="interface-label">Время:</span>
+                        <span class="interface-value">25 сек.</span>
+                        <span class="interface-label">Позиция:</span>
+                        <span class="interface-value">(12, 7)</span>
+                    </div>
+                    <div class="interface-row">
+                        <span class="interface-label" style="color: #aaa;">Управление: WASD/стрелки | Выход: Esc</span>
+                    </div>
+                    <div style="border-top: 1px solid #444; margin: 5px 0;"></div>
+                    
+                    <div style="text-align: center; margin: 10px 0; font-family: 'Consolas', monospace; white-space: pre;">
+┌────────────────────────────┐
+│                            │
+│               ●            │
+│                            │
+│                            │
+│                            │
+│                            │
+└────────────────────────────┘
+            </div>
+                </div>
+                
+                <div class="score-meter" style="margin-top: 20px;">
+                    <div class="score-fill" id="demoMeter" style="width: 60%;"></div>
+                    <div class="score-label">Счёт: 25/100</div>
+                </div>
+                
+                <div class="success" style="margin-top: 15px;">
+                    <strong>✅ Критерии успеха:</strong><br>
+                    • Вверху экрана видна информационная панель<br>
+                    • Счёт увеличивается каждую секунду<br>
+                    • Позиция игрока отображается корректно<br>
+                    • Игра по-прежнему работает (движение, столкновения)
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 9 -->
+        <div class="slide" id="slide9">
+            <div class="slide-content">
+                <h2>🏆 ШАГ 6: Улучшаем экран Game Over</h2>
+                <p>Показываем финальный результат игроку:</p>
+                
+                <div class="code-block yellow">
+// После выхода из игрового цикла (при поражении)
+Console.Clear();
+Console.ForegroundColor = ConsoleColor.Yellow;
+
+Console.WriteLine("=== ИГРА ОКОНЧЕНА ===");
+Console.WriteLine();
+Console.ForegroundColor = ConsoleColor.White;
+Console.WriteLine($"Ваш результат:");
+Console.WriteLine();
+Console.ForegroundColor = ConsoleColor.Green;
+Console.WriteLine($"  🏆 Счёт: {score} очков");
+Console.WriteLine($"  ⏱️ Время: {score} секунд");
+Console.WriteLine($"  📍 Последняя позиция: ({playerX}, {playerY})");
+Console.WriteLine();
+
+// Можно добавить оценку результата
+if (score < 10)
+    Console.WriteLine("  Новый рекорд: Попробуйте набрать больше 10 очков!");
+else if (score < 30)
+    Console.WriteLine("  Хороший результат! Можете лучше!");
+else
+    Console.WriteLine("  Отличная игра! Вы настоящий мастер!");
+
+Console.ResetColor();
+Console.WriteLine("\nНажмите любую клавишу...");
+Console.ReadKey();</div>
+                
+                <div class="step gold" style="margin-top: 15px;">
+                    <h3>Что видит игрок при завершении:</h3>
+                    <div class="game-interface" style="max-width: 400px; margin: 10px auto; background: #1a1a2e;">
+                        <div class="interface-header" style="color: #ffcc00;">=== ИГРА ОКОНЧЕНА ===</div>
+                        <div style="text-align: center; margin: 10px 0;">
+                            <div style="color: #00ff88; font-size: 1.2rem;">🏆 Счёт: 25 очков</div>
+                            <div style="color: #00ccff; font-size: 1.2rem;">⏱️ Время: 25 секунд</div>
+                            <div style="color: #ff9966; font-size: 1.2rem;">📍 Позиция: (12, 7)</div>
+                        </div>
+                        <div style="color: #ffcc00; text-align: center; margin-top: 10px;">
+                            Хороший результат! Можете лучше!
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tip">
+                    <strong>💡 Можно добавить звуки достижений:</strong>
+                    <div class="code-block small">
+if (score >= 50) Console.Beep(1000, 300); // Высокий звук для рекорда
+if (score >= 100) Console.Beep(1200, 500); // Ещё выше для супер-рекорда</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 10 -->
+        <div class="slide" id="slide10">
+            <div class="slide-content">
+                <h2>⚡ Улучшение: Бонусы и сложность</h2>
+                <p>Можно сделать игру более интересной:</p>
+                
+                <div class="code-block yellow">
+// Дополнительные возможности:
+const int SCORE_BONUS_FAST = 2;     // Очков в секунду при ускорении
+const int SPEED_INCREASE_SCORE = 50; // Каждые 50 очков увеличиваем скорость
+int gameSpeed = GAME_SPEED;         // Текущая скорость игры
+
+// В игровом цикле:
+if (score >= SPEED_INCREASE_SCORE && score % SPEED_INCREASE_SCORE == 0)
+{
+    gameSpeed = Math.Max(50, gameSpeed - 10); // Увеличиваем скорость
+    Console.Beep(1200, 100); // Звук ускорения
+}
+
+// Используем gameSpeed вместо GAME_SPEED
+Thread.Sleep(gameSpeed);</div>
+                
+                <div class="visual-example" style="margin-top: 15px;">
+                    <div class="visual-box">
+                        <h4>Уровни сложности</h4>
+                        <p>0-49 очков: скорость 100</p>
+                        <p>50-99 очков: скорость 90</p>
+                        <p>100-149 очков: скорость 80</p>
+                        <p>и т.д.</p>
+                    </div>
+                    
+                    <div class="visual-box">
+                        <h4>Бонусы</h4>
+                        <p>За каждый поворот: +1 очко</p>
+                        <p>За время в центре: +2 очка/сек</p>
+                        <p>Комбо без ошибок: ×2 очки</p>
+                    </div>
+                </div>
+                
+                <div class="tip">
+                    <strong>🎮 Это делает игру:</strong><br>
+                    1. Более динамичной (скорость растёт)<br>
+                    2. Более стратегической (где двигаться?)<br>
+                    3. Более реиграбельной (хочется побить рекорд)
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 11 -->
+        <div class="slide" id="slide11">
+            <div class="slide-content">
+                <h2>💾 Сохраняем результат</h2>
+                <div class="code-block small" style="text-align: center;">
+git add .
+git commit -m "Урок 6: Добавил систему счёта и информационную панель"
+git push</div>
+                
+                <div class="step" style="margin-top: 20px;">
+                    <h3>✅ Что должно работать:</h3>
+                    <ul class="checklist">
+                        <li>Вверху экрана видна информационная панель</li>
+                        <li>Счёт увеличивается каждую секунду</li>
+                        <li>Отображается позиция игрока и время игры</li>
+                        <li>При Game Over показывается финальный результат</li>
+                        <li>Игра сохраняет всю предыдущую функциональность</li>
+                    </ul>
+                </div>
+                
+                <div class="success">
+                    <strong>🎉 Поздравляем!</strong><br>
+                    Теперь у вас профессиональная игра с интерфейсом и прогрессом!
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 12 -->
+        <div class="slide" id="slide12">
+            <div class="slide-content">
+                <h2>🏠 Домашнее задание</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin: 20px 0;">
+                    <div class="step" style="background: rgba(255, 204, 0, 0.1);">
+                        <h3>📝 Уровень 1 (обязательно)</h3>
+                        <ul>
+                            <li>Добавь звук при получении очков</li>
+                            <li>Сделай прогресс-бар для счёта (как на слайде 8)</li>
+                            <li>Добавь отображение "лучшего счёта" в панели</li>
+                        </ul>
+                    </div>
+                    <div class="step" style="background: rgba(255, 153, 102, 0.1);">
+                        <h3>⭐ Уровень 2 (повышенный)</h3>
+                        <ul>
+                            <li>Добавь бонусные очки за нахождение в центре поля</li>
+                            <li>Сделай ускорение игры каждые 50 очков</li>
+                            <li>Реализуй систему комбо (×2 очки за движение без остановки)</li>
+                        </ul>
+                    </div>
+                    <div class="step" style="background: rgba(0, 255, 136, 0.1);">
+                        <h3>🏆 Уровень 3 (эксперт)</h3>
+                        <ul>
+                            <li>Сохраняй рекорд в файл (используй System.IO.File)</li>
+                            <li>Создай достижения (Achievements) за определённые счета</li>
+                            <li>Добавь мультипликаторы очков за сложные манёвры</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="tip" style="margin-top: 20px;">
+                    <strong>💡 Пример прогресс-бара:</strong>
+                    <div class="code-block small">
+// В методе DrawInfoPanel:
+int progress = (score % 100); // Прогресс до 100 очков
+Console.WriteLine($"Прогресс: [{new string('█', progress / 10)}{new string('░', 10 - progress / 10)}] {progress}%");</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 13 -->
+        <div class="slide" id="slide13">
+            <div class="slide-content">
+                <h2>🚀 Что будет дальше?</h2>
+                <h3>На следующем уроке:</h3>
+                <div class="step">
+                    <p><strong>🎯 Цель:</strong> Превратить точку в НАСТОЯЩУЮ змейку!</p>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin: 20px 0;">
+                    <div class="step">
+                        <h4>📌 Изучим:</h4>
+                        <ul>
+                            <li>Работу со списками (List<Position>)</li>
+                            <li>Алгоритм движения "гусеницей"</li>
+                            <li>Отрисовку нескольких сегментов</li>
+                            <li>Управление длиной змейки</li>
+                        </ul>
+                    </div>
+                    <div class="step">
+                        <h4>✅ Получим:</h4>
+                        <ul>
+                            <li>Настоящую змейку вместо точки</li>
+                            <li>Понимание коллекций в C#</li>
+                            <li>Основу для роста змейки</li>
+                            <li>Настоящую игру "Змейка"!</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="score-display" style="margin-top: 15px; color: #00ff88; border-color: #00ff88;">
+                    Сейчас: Точка со счётом<br>
+                    Урок 7: Настоящая змейка с сегментами!
+                </div>
+                
+                <p style="color: #00ff88; font-size: 1.3rem; margin-top: 15px;">
+                    Уже на следующем уроке вы создадите классическую игру "Змейка"!
+                </p>
+            </div>
+        </div>
+
+        <!-- Слайд 14 -->
+        <div class="slide" id="slide14">
+            <div class="slide-content">
+                <h2>🎯 Итоги урока</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin: 20px 0;">
+                    <div class="step">
+                        <h3>✅ Мы научились:</h3>
+                        <ul class="checklist">
+                            <li>Создавать систему начисления очков</li>
+                            <li>Разрабатывать информационные панели</li>
+                            <li>Работать со временем в игре</li>
+                            <li>Отображать статистику игрока</li>
+                        </ul>
+                    </div>
+                    <div class="step">
+                        <h3>✅ Мы создали:</h3>
+                        <ul class="checklist">
+                            <li>Профессиональный интерфейс игры</li>
+                            <li>Систему прогресса и мотивации</li>
+                            <li>Детальный экран результатов</li>
+                            <li>Игру, которая выглядит как продукт</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: rgba(255, 204, 0, 0.1); border-radius: 8px;">
+                    <h3 style="color: #ffcc00;">💰 Главное достижение:</h3>
+                    <p style="font-size: 1.3rem;">Теперь игрок видит свой прогресс и имеет цель — набрать больше очков!</p>
+                    <p style="font-size: 1.1rem; color: #00ff88; margin-top: 10px;">Игра превратилась из демонстрации в соревнование с самим собой!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 15 -->
+        <div class="slide" id="slide15">
+            <div class="slide-content">
+                <h1>🎉 Урок завершён!</h1>
+                <p style="font-size: 1.4rem; margin: 20px 0; color: #ffcc00;">
+                    "Сегодня вы добавили в игру душу — прогресс и достижения!<br>
+                    Теперь это не просто программа, а настоящее соревнование."
+                </p>
+                <p style="font-size: 1.6rem; color: #00ff88; margin-top: 30px;">
+                    Следующий урок: СОЗДАЁМ НАСТОЯЩУЮ ЗМЕЙКУ<br>
+                    <span style="font-size: 1.8rem;">🐍 Увидимся!</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Навигация -->
+    <div class="navigation">
+        <button class="nav-btn" onclick="showSlide(currentSlide - 1)">
+            <span>◀</span> Назад
+        </button>
+        <button class="nav-btn" onclick="showSlide(currentSlide + 1)">
+            Вперёд <span>▶</span>
+        </button>
+    </div>
+
+    <div class="slide-counter" id="slideCounter">Слайд 1 из 15</div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 15;
+        let startTime = new Date();
+        let timerInterval;
+
+        function init() {
+            updateSlideCounter();
+            updateProgress();
+            startTimer();
+            setupKeyboardNavigation();
+            
+            // Анимация счетчика на слайде 4
+            setTimeout(animateScoreCounter, 1000);
+            
+            // Анимация прогресс-бара на слайде 8
+            setTimeout(() => {
+                const meter = document.getElementById('demoMeter');
+                if (meter) {
+                    meter.style.width = '60%';
+                }
+            }, 500);
+            
+            // Анимация демо-счета на слайде 3
+            startScoreDemo();
+        }
+
+        function showSlide(n) {
+            if (n < 1) n = 1;
+            if (n > totalSlides) n = totalSlides;
+            
+            document.querySelectorAll('.slide').forEach(slide => {
+                slide.classList.remove('active');
+            });
+            
+            document.getElementById(`slide${n}`).classList.add('active');
+            currentSlide = n;
+            
+            updateSlideCounter();
+            updateProgress();
+            
+            // Останавливаем демо анимации
+            if (window.scoreDemoInterval) {
+                clearInterval(window.scoreDemoInterval);
+            }
+            
+            // Запускаем анимации для конкретных слайдов
+            if (n === 3) {
+                startScoreDemo();
+            }
+            if (n === 4) {
+                setTimeout(animateScoreCounter, 500);
+            }
+            if (n === 8) {
+                setTimeout(() => {
+                    const meter = document.getElementById('demoMeter');
+                    if (meter) {
+                        meter.style.width = '60%';
+                    }
+                }, 300);
+            }
+        }
+
+        function updateSlideCounter() {
+            document.getElementById('slideCounter').textContent = `Слайд ${currentSlide} из ${totalSlides}`;
+        }
+
+        function updateProgress() {
+            const progress = (currentSlide / totalSlides) * 100;
+            document.getElementById('progress').style.width = `${progress}%`;
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                const now = new Date();
+                const diff = Math.floor((now - startTime) / 1000);
+                const minutes = Math.floor(diff / 60);
+                const seconds = diff % 60;
+                document.getElementById('timer').textContent = 
+                    `Время: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function setupKeyboardNavigation() {
+            document.addEventListener('keydown', (e) => {
+                if (!e.target.matches('input, textarea')) {
+                    switch(e.key) {
+                        case 'ArrowLeft':
+                        case 'PageUp':
+                            showSlide(currentSlide - 1);
+                            break;
+                        case 'ArrowRight':
+                        case 'PageDown':
+                        case ' ':
+                            showSlide(currentSlide + 1);
+                            break;
+                        case 'Home':
+                            showSlide(1);
+                            break;
+                        case 'End':
+                            showSlide(totalSlides);
+                            break;
+                    }
+                }
+            });
+        }
+
+        function animateScoreCounter() {
+            const counter = document.getElementById('scoreCounter');
+            if (!counter) return;
+            
+            let score = 0;
+            const interval = setInterval(() => {
+                score++;
+                counter.innerHTML = `<span class="counter-digit">${score}</span>`;
+                
+                if (score >= 10) {
+                    clearInterval(interval);
+                }
+            }, 300);
+        }
+
+        function startScoreDemo() {
+            const demoScore = document.getElementById('demoScore');
+            if (!demoScore) return;
+            
+            let score = 0;
+            window.scoreDemoInterval = setInterval(() => {
+                score = (score + 1) % 100;
+                demoScore.textContent = score;
+            }, 100);
+        }
+
+        document.querySelector('.presentation-container').addEventListener('click', (e) => {
+            if (!e.target.closest('.nav-btn')) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const middle = rect.width / 2;
+                
+                if (clickX < middle) {
+                    showSlide(currentSlide - 1);
+                } else {
+                    showSlide(currentSlide + 1);
+                }
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

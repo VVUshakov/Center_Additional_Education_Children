@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Урок 9: Самопересечение | Создание игры Змейка</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .presentation-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            padding: 40px;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            z-index: 10;
+        }
+
+        .slide-content {
+            max-width: 1200px;
+            width: 90%;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 3.2rem;
+            margin-bottom: 20px;
+            color: #ff4444;
+            text-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+            background: linear-gradient(90deg, #ff4444, #ff9966);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #ff9966;
+        }
+
+        h3 {
+            font-size: 1.6rem;
+            margin-bottom: 15px;
+            color: #ffcc00;
+        }
+
+        p {
+            font-size: 1.3rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        ul, ol {
+            text-align: left;
+            font-size: 1.2rem;
+            line-height: 1.5;
+            margin: 15px auto;
+            max-width: 800px;
+            padding-left: 30px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            padding-left: 10px;
+        }
+
+        .code-block {
+            background: #1a1a2e;
+            color: #00ff88;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 1rem;
+            text-align: left;
+            margin: 15px auto;
+            max-width: 800px;
+            border-left: 4px solid #00ff88;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        .code-block.red {
+            border-left: 4px solid #ff4444;
+        }
+
+        .code-block.small {
+            font-size: 0.9rem;
+            padding: 15px;
+        }
+
+        .step {
+            background: rgba(0, 204, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 12px 0;
+            border-left: 4px solid #00ccff;
+        }
+
+        .step.warning {
+            background: rgba(255, 100, 100, 0.1);
+            border-left: 4px solid #ff4444;
+        }
+
+        .checklist {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .checklist li:before {
+            content: "✅ ";
+            margin-right: 10px;
+            color: #00ff88;
+        }
+
+        .checklist.crash li:before {
+            content: "💥 ";
+            color: #ff4444;
+        }
+
+        .warning {
+            background: rgba(255, 100, 100, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #ff4444;
+            margin: 15px 0;
+        }
+
+        .tip {
+            background: rgba(255, 204, 0, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #ffcc00;
+            margin: 15px 0;
+        }
+
+        .success {
+            background: rgba(0, 255, 136, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #00ff88;
+            margin: 15px 0;
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: linear-gradient(135deg, #ff4444, #ff9966);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 10px rgba(255, 68, 68, 0.4);
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(255, 68, 68, 0.6);
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            font-size: 1.1rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 16px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 100;
+        }
+
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #ff4444, #ff9966);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .logo {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #ff4444;
+            z-index: 100;
+        }
+
+        .timer {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            font-size: 1.1rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 16px;
+            border-radius: 15px;
+        }
+
+        .highlight {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+
+        .danger {
+            color: #ff4444;
+            font-weight: bold;
+        }
+
+        .crash-demo {
+            border: 2px solid #ff4444;
+            padding: 15px;
+            border-radius: 8px;
+            background: #000;
+            display: inline-block;
+            margin: 15px 0;
+            font-family: 'Consolas', monospace;
+            font-size: 1.1rem;
+            color: #ff4444;
+            min-width: 400px;
+            line-height: 1.3;
+        }
+
+        .snake-grid {
+            display: inline-grid;
+            grid-template-columns: repeat(10, 20px);
+            gap: 1px;
+            margin: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            position: relative;
+        }
+
+        .grid-cell {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-family: 'Consolas', monospace;
+        }
+
+        .grid-cell.wall {
+            background: rgba(0, 204, 255, 0.3);
+            color: #00ccff;
+        }
+
+        .grid-cell.snake-head {
+            background: #00ff88;
+            color: #000;
+            font-weight: bold;
+            border-radius: 50%;
+        }
+
+        .grid-cell.snake-body {
+            background: #00cc66;
+            color: #fff;
+            border-radius: 3px;
+        }
+
+        .grid-cell.snake-crash {
+            background: #ff4444;
+            color: #fff;
+            border-radius: 50%;
+            animation: crashPulse 0.5s infinite;
+        }
+
+        @keyframes crashPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .grid-cell.empty {
+            background: rgba(255, 255, 255, 0.05);
+            color: #666;
+        }
+
+        .collision-animation {
+            position: relative;
+            width: 400px;
+            height: 200px;
+            margin: 20px auto;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid #444;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .snake-segment {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #00ff88;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            transform: translate(-50%, -50%);
+            transition: all 0.5s ease;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.7);
+        }
+
+        .segment-head {
+            background: #00ccff;
+            z-index: 10;
+        }
+
+        .segment-crash {
+            background: #ff4444 !important;
+            animation: segmentCrash 0.5s infinite;
+        }
+
+        @keyframes segmentCrash {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.3); }
+        }
+
+        .visual-example {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .visual-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            min-width: 180px;
+        }
+
+        .algorithm-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 15px 0;
+            max-width: 600px;
+        }
+
+        .algorithm-step {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+        }
+
+        .step-number {
+            background: #ff4444;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .step-text {
+            flex: 1;
+            text-align: left;
+        }
+
+        .comparison-table {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 20px 0;
+            max-width: 800px;
+        }
+
+        .table-header {
+            background: rgba(255, 68, 68, 0.2);
+            padding: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .table-cell {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #333;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.3rem; }
+            h2 { font-size: 1.6rem; }
+            h3 { font-size: 1.3rem; }
+            p, li { font-size: 1.1rem; }
+            .slide-content { padding: 20px; }
+            .nav-btn { padding: 10px 16px; font-size: 0.9rem; }
+            .code-block { font-size: 0.9rem; padding: 12px; }
+            .snake-grid { grid-template-columns: repeat(10, 15px); }
+            .grid-cell { width: 15px; height: 15px; font-size: 0.7rem; }
+            .collision-animation { width: 300px; height: 150px; }
+            .comparison-table { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">🐍 Урок 9: Самопересечение</div>
+    <div class="timer" id="timer">Время: 00:00</div>
+    
+    <div class="progress-bar">
+        <div class="progress" id="progress"></div>
+    </div>
+
+    <div class="presentation-container">
+        <!-- Слайд 1 -->
+        <div class="slide active" id="slide1">
+            <div class="slide-content">
+                <h1>💥 УРОК 9: САМОПЕРЕСЕЧЕНИЕ</h1>
+                <h2>Добавляем второе условие поражения</h2>
+                <p style="font-size: 1.4rem; margin-top: 20px; color: #ff9966;">
+                    Сегодня завершим создание классической механики "Змейки"!
+                </p>
+                <div class="step" style="margin-top: 20px;">
+                    <h3>🎯 Цель урока:</h3>
+                    <p>1. Научиться проверять столкновение головы с телом</p>
+                    <p>2. Добавить условие поражения при самопересечении</p>
+                    <p>3. Создать полноценную классическую игру "Змейка"</p>
+                </div>
+                <p style="margin-top: 15px;">Длительность: 1 час 20 минут</p>
+            </div>
+        </div>
+
+        <!-- Слайд 2 -->
+        <div class="slide" id="slide2">
+            <div class="slide-content">
+                <h2>📝 Проверка домашнего задания</h2>
+                <div class="step">
+                    <h3>Быстрая проверка Урока 8:</h3>
+                    <ul class="checklist">
+                        <li>У всех змейка растёт при съедении еды?</li>
+                        <li>Кто добавил звук при съедении еды?</li>
+                        <li>Кто сделал разные символы для еды?</li>
+                        <li>Кто реализовал анимацию очков?</li>
+                    </ul>
+                </div>
+                <div class="crash-demo" style="margin-top: 15px;">
+                    ПРОБЛЕМА СЕЙЧАС:<br>
+                    Можно бесконечно врезаться в себя —<br>
+                    игра не заканчивается!
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 3 -->
+        <div class="slide" id="slide3">
+            <div class="slide-content">
+                <h2>🎯 Что такое самопересечение?</h2>
+                <div class="step">
+                    <h3>В классической "Змейке" есть ДВА условия поражения:</h3>
+                    <ul class="checklist crash">
+                        <li> Столкновение со стеной (границами поля)</li>
+                        <li> Столкновение головы с собственным телом</li>
+                    </ul>
+                </div>
+                
+                <div class="snake-grid" style="margin-top: 20px;">
+                    <div class="grid-cell wall">┌</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">┐</div>
+                    
+                    <div class="grid-cell wall">│</div>
+                    <div class="grid-cell snake-body">○</div>
+                    <div class="grid-cell snake-body">○</div>
+                    <div class="grid-cell snake-body">○</div>
+                    <div class="grid-cell snake-body">○</div>
+                    <div class="grid-cell snake-crash">●</div>
+                    <div class="grid-cell snake-body">○</div>
+                    <div class="grid-cell snake-body">○</div>
+                    <div class="grid-cell snake-body">○</div>
+                    <div class="grid-cell wall">│</div>
+                    
+                    <div class="grid-cell wall">│</div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell wall">│</div>
+                    
+                    <div class="grid-cell wall">│</div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell wall">│</div>
+                    
+                    <div class="grid-cell wall">└</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">┘</div>
+                </div>
+                
+                <div style="margin-top: 15px;">
+                    <p style="color: #ff4444;">
+                        ● (красный) — голова врезалась в тело!<br>
+                        ○ (зелёный) — тело змейки
+                    </p>
+                </div>
+                
+                <div class="warning">
+                    <strong>⚠️ Почему это важно?</strong><br>
+                    Без проверки самопересечения можно бесконечно "закручиваться" в клубок.<br>
+                    Это делает игру слишком простой и неинтересной!
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 4 -->
+        <div class="slide" id="slide4">
+            <div class="slide-content">
+                <h2>🤔 Как определить самопересечение?</h2>
+                <p>Алгоритм прост: сравниваем позицию головы с позициями всех сегментов тела</p>
+                
+                <div class="algorithm-steps">
+                    <div class="algorithm-step">
+                        <div class="step-number">1</div>
+                        <div class="step-text">Получаем позицию головы змейки</div>
+                    </div>
+                    
+                    <div class="algorithm-step">
+                        <div class="step-number">2</div>
+                        <div class="step-text">Проходим по ВСЕМ сегментам тела (начиная с индекса 1)</div>
+                    </div>
+                    
+                    <div class="algorithm-step">
+                        <div class="step-number">3</div>
+                        <div class="step-text">Сравниваем координаты головы с координатами каждого сегмента</div>
+                    </div>
+                    
+                    <div class="algorithm-step">
+                        <div class="step-number">4</div>
+                        <div class="step-text">Если координаты совпадают — самопересечение!</div>
+                    </div>
+                </div>
+                
+                <div class="code-block red">
+// Метод для проверки самопересечения
+bool CheckSelfCollision()
+{
+    // Голова змейки — первый элемент списка
+    Position head = snakeSegments[0];
+    
+    // Проверяем все сегменты, КРОМЕ головы (начинаем с 1)
+    for (int i = 1; i < snakeSegments.Count; i++)
+    {
+        Position segment = snakeSegments[i];
+        
+        // Если координаты головы совпадают с координатами сегмента
+        if (head.X == segment.X && head.Y == segment.Y)
+        {
+            return true;  // Самопересечение обнаружено!
+        }
+    }
+    
+    return false;  // Самопересечения нет
+}</div>
+                
+                <div class="tip">
+                    <strong>💡 Почему начинаем с i = 1?</strong><br>
+                    Потому что snakeSegments[0] — это голова!<br>
+                    Не нужно сравнивать голову с самой собой — это всегда будет true.<br>
+                    Начинаем сравнение с первого сегмента тела (индекс 1).
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 5 -->
+        <div class="slide" id="slide5">
+            <div class="slide-content">
+                <h2>📍 Визуализация алгоритма</h2>
+                <p>Посмотрим, как работает проверка:</p>
+                
+                <div class="collision-animation" id="collisionDemo">
+                    <!-- Анимация будет добавлена через JavaScript -->
+                </div>
+                
+                <div style="font-family: 'Consolas'; margin-top: 15px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;">
+                    snakeSegments = [
+                    <span style="color: #00ccff;">[0] (10,5)</span>,  // Голова ●
+                    <span style="color: #00ff88;">[1] (9,5)</span>,
+                    <span style="color: #00ff88;">[2] (8,5)</span>,
+                    <span style="color: #00ff88;">[3] (7,5)</span>,
+                    <span style="color: #ff4444;">[4] (6,5)</span>   // Голова движется сюда!
+                    ]
+                </div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Что происходит в цикле for?</h3>
+                    <div style="display: flex; flex-direction: column; gap: 5px; margin: 10px 0;">
+                        <div>i = 1: head(6,5) vs segment[1](9,5) → <span style="color: #00ff88;">НЕТ совпадения</span></div>
+                        <div>i = 2: head(6,5) vs segment[2](8,5) → <span style="color: #00ff88;">НЕТ совпадения</span></div>
+                        <div>i = 3: head(6,5) vs segment[3](7,5) → <span style="color: #00ff88;">НЕТ совпадения</span></div>
+                        <div>i = 4: head(6,5) vs segment[4](6,5) → <span style="color: #ff4444;">СОВПАДЕНИЕ! Game Over!</span></div>
+                    </div>
+                </div>
+                
+                <div class="warning">
+                    <strong>📌 Важный момент:</strong><br>
+                    Проверяем новую позицию головы (куда она ДВИГАЕТСЯ),<br>
+                    а не текущую позицию (где она СЕЙЧАС).
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 6 -->
+        <div class="slide" id="slide6">
+            <div class="slide-content">
+                <h2>⚡ ШАГ 1: Интегрируем проверку в движение</h2>
+                <p>Добавляем проверку в метод MoveSnake():</p>
+                
+                <div class="code-block red">
+// Обновлённый MoveSnake() с проверкой самопересечения
+void MoveSnake()
+{
+    // 1. Получаем текущую голову
+    Position oldHead = snakeSegments[0];
+    
+    // 2. Вычисляем новую позицию головы
+    Position newHead = CalculateNewHead(oldHead, currentDirection);
+    
+    // 3. ПРОВЕРКА САМОПЕРЕСЕЧЕНИЯ (НОВОЕ!)
+    // Сначала создаём временный список для проверки
+    bool willCollide = false;
+    
+    // Проверяем, не совпадает ли новая голова с каким-либо сегментом
+    // Исключаем хвост (последний элемент), так как он скоро исчезнет
+    for (int i = 0; i < snakeSegments.Count - 1; i++)
+    {
+        Position segment = snakeSegments[i];
+        if (newHead.X == segment.X && newHead.Y == segment.Y)
+        {
+            willCollide = true;
+            break;
+        }
+    }
+    
+    // 4. Если будет столкновение — игра окончена
+    if (willCollide)
+    {
+        isGameRunning = false;
+        return;  // Прекращаем выполнение метода
+    }
+    
+    // 5. Продолжаем обычное движение
+    // ... (код съедения еды и добавления головы)
+}</div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Почему исключаем последний сегмент (хвост)?</h3>
+                    <div class="visual-example">
+                        <div class="visual-box">
+                            <h4>Без исключения:</h4>
+                            <p>Новая голова может<br>совпасть с текущим хвостом</p>
+                            <p style="color: #ff4444;">Ложное срабатывание!</p>
+                        </div>
+                        
+                        <div class="visual-box">
+                            <h4>С исключением:</h4>
+                            <p>Хвост исчезнет после движения</p>
+                            <p>Не считаем это столкновением</p>
+                            <p style="color: #00ff88;">Корректная логика!</p>
+                        </div>
+                    </div>
+                    
+                    <p><strong>Цикл: for (int i = 0; i < snakeSegments.Count - 1; i++)</strong></p>
+                    <p>Count - 1 исключает последний элемент (хвост) из проверки!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 7 -->
+        <div class="slide" id="slide7">
+            <div class="slide-content">
+                <h2>🔄 ШАГ 2: Объединяем все проверки столкновений</h2>
+                <p>Создаём универсальный метод для проверки всех столкновений:</p>
+                
+                <div class="code-block red">
+// Универсальный метод проверки всех столкновений
+bool CheckAllCollisions(Position position)
+{
+    // 1. Проверка столкновения со стенами
+    bool wallCollision = position.X <= 0 || 
+                         position.X >= FIELD_WIDTH - 1 ||
+                         position.Y <= BORDER_OFFSET || 
+                         position.Y >= FIELD_HEIGHT + BORDER_OFFSET;
+    
+    if (wallCollision) return true;
+    
+    // 2. Проверка самопересечения
+    // Исключаем хвост из проверки (он скоро исчезнет)
+    for (int i = 0; i < snakeSegments.Count - 1; i++)
+    {
+        Position segment = snakeSegments[i];
+        if (position.X == segment.X && position.Y == segment.Y)
+        {
+            return true;
+        }
+    }
+    
+    return false;  // Столкновений нет
+}
+
+// Использование в MoveSnake():
+Position newHead = CalculateNewHead(oldHead, currentDirection);
+
+if (CheckAllCollisions(newHead))
+{
+    isGameRunning = false;
+    return;
+}</div>
+                
+                <div class="comparison-table" style="margin-top: 20px;">
+                    <div class="table-header">До Урока 9</div>
+                    <div class="table-header">После Урока 9</div>
+                    
+                    <div class="table-cell">
+                        Проверяем только стены:<br>
+                        <code style="color: #ff4444;">if (playerX <= 0) ...</code>
+                    </div>
+                    
+                    <div class="table-cell">
+                        Проверяем ВСЁ:<br>
+                        <code style="color: #00ff88;">if (CheckAllCollisions(newHead))</code>
+                    </div>
+                    
+                    <div class="table-cell">
+                        Одно условие поражения
+                    </div>
+                    
+                    <div class="table-cell">
+                        Два условия поражения
+                    </div>
+                    
+                    <div class="table-cell">
+                        Можно врезаться в себя
+                    </div>
+                    
+                    <div class="table-cell">
+                        Самопересечение = Game Over
+                    </div>
+                </div>
+                
+                <div class="success">
+                    <strong>🎯 Преимущества универсального метода:</strong><br>
+                    1. Весь код проверки в одном месте<br>
+                    2. Легко добавлять новые типы столкновений<br>
+                    3. Читаемость и поддерживаемость кода<br>
+                    4. Можно использовать для проверки других объектов
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 8 -->
+        <div class="slide" id="slide8">
+            <div class="slide-content">
+                <h2>🎭 ШАГ 3: Улучшаем экран Game Over</h2>
+                <p>Показываем причину поражения:</p>
+                
+                <div class="code-block red">
+// После выхода из игрового цикла
+Console.Clear();
+
+// Определяем причину поражения
+string crashReason = "неизвестная причина";
+
+Position head = snakeSegments[0];
+
+// Проверяем столкновение со стенами
+if (head.X <= 0)
+    crashReason = "левую стену";
+else if (head.X >= FIELD_WIDTH - 1)
+    crashReason = "правую стену";
+else if (head.Y <= BORDER_OFFSET)
+    crashReason = "верхнюю стену";
+else if (head.Y >= FIELD_HEIGHT + BORDER_OFFSET)
+    crashReason = "нижнюю стену";
+else
+    crashReason = "собственное тело";  // Значит, самопересечение
+
+// Выводим информацию
+Console.ForegroundColor = ConsoleColor.Red;
+Console.WriteLine("💥 ИГРА ОКОНЧЕНА! 💥");
+Console.WriteLine();
+Console.ForegroundColor = ConsoleColor.Yellow;
+Console.WriteLine($"Причина: вы врезались в {crashReason}!");
+Console.WriteLine();
+Console.ForegroundColor = ConsoleColor.White;
+Console.WriteLine($"Итоговый счёт: {score}");
+Console.WriteLine($"Длина змейки: {snakeSegments.Count}");
+Console.WriteLine($"Съедено еды: {score / FOOD_SCORE}");
+Console.WriteLine($"Время игры: {score} секунд");</div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Что видит игрок при разных причинах поражения:</h3>
+                    <div class="visual-example">
+                        <div class="visual-box" style="background: rgba(255, 68, 68, 0.1);">
+                            <h4>Столкновение со стеной</h4>
+                            <p>"Вы врезались в левую стену!"</p>
+                            <p style="color: #00ccff;">Звук: низкий гул</p>
+                        </div>
+                        
+                        <div class="visual-box" style="background: rgba(255, 68, 68, 0.1);">
+                            <h4>Самопересечение</h4>
+                            <p>"Вы врезались в собственное тело!"</p>
+                            <p style="color: #ff4444;">Звук: резкий скрежет</p>
+                        </div>
+                    </div>
+                    
+                    <div class="tip">
+                        <strong>💡 Можно добавить разные звуки:</strong>
+                        <div class="code-block small">
+if (crashReason.Contains("стен"))
+    Console.Beep(200, 500);  // Низкий звук для стен
+else
+    Console.Beep(500, 300);  // Высокий звук для самопересечения</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 9 -->
+        <div class="slide" id="slide9">
+            <div class="slide-content">
+                <h2>🔄 ШАГ 4: Оптимизация проверки</h2>
+                <p>Улучшаем производительность проверки самопересечения:</p>
+                
+                <div class="code-block red">
+// Оптимизированная проверка самопересечения
+bool CheckSelfCollisionOptimized(Position newHead)
+{
+    // Используем HashSet для быстрой проверки
+    // (продвинутая тема, но хороша для понимания)
+    
+    // Более эффективная версия:
+    // Проверяем только "опасные" сегменты
+    
+    // Когда змейка короткая (< 4 сегментов), самопересечение невозможно
+    if (snakeSegments.Count < 4)
+        return false;
+    
+    // Для длинной змейки проверяем только ближайшие сегменты
+    // (голова не может достать до далёких сегментов за один ход)
+    int segmentsToCheck = Math.Min(snakeSegments.Count - 1, 8);
+    
+    for (int i = 1; i <= segmentsToCheck; i++)
+    {
+        Position segment = snakeSegments[i];
+        if (newHead.X == segment.X && newHead.Y == segment.Y)
+            return true;
+    }
+    
+    return false;
+}</div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Почему это эффективнее?</h3>
+                    <div class="visual-example">
+                        <div class="visual-box">
+                            <h4>Обычная проверка</h4>
+                            <p>Проверяет ВСЕ сегменты</p>
+                            <p>Для змейки из 100 сегментов:<br>100 проверок за кадр</p>
+                        </div>
+                        
+                        <div class="visual-box">
+                            <h4>Оптимизированная</h4>
+                            <p>Проверяет только ближайшие</p>
+                            <p>Для змейки из 100 сегментов:<br>8 проверок за кадр</p>
+                            <p style="color: #00ff88;">В 12.5 раз быстрее!</p>
+                        </div>
+                    </div>
+                    
+                    <div class="tip">
+                        <strong>💡 Логика оптимизации:</strong><br>
+                        Голова движется на 1 клетку за кадр.<br>
+                        За один ход она не может столкнуться с сегментами,<br>
+                        которые находятся дальше чем на N клеток.<br>
+                        Поэтому проверяем только ближайшие N сегментов!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 10 -->
+        <div class="slide" id="slide10">
+            <div class="slide-content">
+                <h2>👁️ Тестируем результат</h2>
+                <p>Что должно получиться:</p>
+                
+                <div style="font-family: 'Consolas', monospace; background: #000; padding: 15px; border-radius: 8px; margin: 15px auto; max-width: 500px; text-align: left;">
+                    <div style="color: #fff; border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 10px;">
+                        === ЗМЕЙКА === | Счёт: 120 | Длина: 15 | Еда: 12
+                    </div>
+                    <div style="text-align: center; white-space: pre;">
+┌────────────────────────────┐
+│     ○ ○ ○ ○                │
+│     ○     ○                │
+│     ○ ● → ○                │
+│     ○ ○ ○ ○                │
+│                            │
+│           🍎               │
+└────────────────────────────┘
+                    </div>
+                    <div style="color: #ff4444; text-align: center; margin-top: 10px;">
+                        ОПАСНОСТЬ! Голова движется в ловушку!
+                    </div>
+                </div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>✅ Тест-кейсы для проверки:</h3>
+                    <ul class="checklist">
+                        <li>Создать "ловушку" и врезаться в себя → Game Over</li>
+                        <li>Врезаться в стену → Game Over (как раньше)</li>
+                        <li>На экране Game Over указана правильная причина</li>
+                        <li>Короткая змейка (3-4 сегмента) не даёт ложных срабатываний</li>
+                        <li>Длинная змейка правильно определяет самопересечение</li>
+                    </ul>
+                </div>
+                
+                <div class="snake-grid" style="margin-top: 15px;">
+                    <div class="grid-cell wall">┌</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">┐</div>
+                    <div class="grid-cell wall">│</div><div class="grid-cell snake-body">○</div><div class="grid-cell snake-body">○</div><div class="grid-cell snake-body">○</div><div class="grid-cell snake-body">○</div><div class="grid-cell snake-crash">●</div><div class="grid-cell snake-body">○</div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell wall">│</div>
+                    <div class="grid-cell wall">│</div><div class="grid-cell snake-body">○</div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell snake-body">○</div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell wall">│</div>
+                    <div class="grid-cell wall">└</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">┘</div>
+                </div>
+                
+                <p style="color: #ff4444; margin-top: 10px;">
+                    Голова ● вот-вот врежется в тело ○!
+                </p>
+            </div>
+        </div>
+
+        <!-- Слайд 11 -->
+        <div class="slide" id="slide11">
+            <div class="slide-content">
+                <h2>🎮 Полная механика классической "Змейки"</h2>
+                <div class="comparison-table" style="margin: 20px 0;">
+                    <div class="table-header" style="grid-column: 1 / 3;">Классическая игра "Змейка" включает:</div>
+                    
+                    <div class="table-cell">✅ Игровой цикл</div>
+                    <div class="table-cell">🔄 Постоянное обновление и отрисовка</div>
+                    
+                    <div class="table-cell">✅ Управление WASD/стрелками</div>
+                    <div class="table-cell">🎮 Контроль направления движения</div>
+                    
+                    <div class="table-cell">✅ Многосегментная змейка</div>
+                    <div class="table-cell">🐍 Голова + тело, движение "гусеницей"</div>
+                    
+                    <div class="table-cell">✅ Система еды</div>
+                    <div class="table-cell">🍎 Случайная генерация, сбор, очки</div>
+                    
+                    <div class="table-cell">✅ Рост змейки</div>
+                    <div class="table-cell">📈 Увеличение длины при съедении еды</div>
+                    
+                    <div class="table-cell">✅ ДВА условия поражения</div>
+                    <div class="table-cell">💥 Стены + самопересечение</div>
+                    
+                    <div class="table-cell">✅ Система счёта</div>
+                    <div class="table-cell">🏆 Очки, время, длина, статистика</div>
+                </div>
+                
+                <div class="success" style="margin-top: 15px;">
+                    <strong>🎉 Поздравляем! Вы создали классическую игру "Змейка"!</strong><br>
+                    Все ключевые механики реализованы:<br>
+                    • Управление • Еда • Рост • Столкновения • Счёт
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 12 -->
+        <div class="slide" id="slide12">
+            <div class="slide-content">
+                <h2>💾 Сохраняем результат</h2>
+                <div class="code-block small" style="text-align: center;">
+git add .
+git commit -m "Урок 9: Добавил проверку самопересечения, завершил классическую механику"
+git push</div>
+                
+                <div class="step" style="margin-top: 20px;">
+                    <h3>✅ Достижения этого урока:</h3>
+                    <ul class="checklist">
+                        <li>Реализована проверка самопересечения змейки</li>
+                        <li>Добавлено второе условие поражения</li>
+                        <li>Создан универсальный метод CheckAllCollisions()</li>
+                        <li>Улучшен экран Game Over с указанием причины</li>
+                        <li>Рассмотрена оптимизация проверок</li>
+                        <li>Завершена классическая механика "Змейки"!</li>
+                    </ul>
+                </div>
+                
+                <div class="crash-demo" style="margin-top: 15px; color: #00ff88; border-color: #00ff88;">
+                    🎮 ИГРА ЗАВЕРШЕНА!<br>
+                    Классическая "Змейка" готова!
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 13 -->
+        <div class="slide" id="slide13">
+            <div class="slide-content">
+                <h2>🏠 Домашнее задание</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin: 20px 0;">
+                    <div class="step" style="background: rgba(255, 68, 68, 0.1);">
+                        <h3>📝 Уровень 1 (обязательно)</h3>
+                        <ul>
+                            <li>Добавь разные звуки для стен и самопересечения</li>
+                            <li>Сделай "предупреждение" при приближении к телу</li>
+                            <li>Добавь в статистику "причина поражения"</li>
+                        </ul>
+                    </div>
+                    <div class="step" style="background: rgba(255, 153, 102, 0.1);">
+                        <h3>⭐ Уровень 2 (повышенный)</h3>
+                        <ul>
+                            <li>Реализуй "призрачный режим" (проход сквозь себя)</li>
+                            <li>Сделай разные уровни сложности (скорость, размер)</li>
+                            <li>Добавь "щит" — временную защиту от столкновений</li>
+                        </ul>
+                    </div>
+                    <div class="step" style="background: rgba(255, 204, 0, 0.1);">
+                        <h3>🏆 Уровень 3 (эксперт)</h3>
+                        <ul>
+                            <li>Создай ИИ-противника (другая змейка)</li>
+                            <li>Реализуй сохранение рекордов в файл</li>
+                            <li>Добавь разные режимы игры (лабиринт, арена)</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="tip">
+                    <strong>💡 Пример предупреждения:</strong>
+                    <div class="code-block small">
+// Если голова близко к телу (на расстоянии 1 клетки)
+foreach (var segment in snakeSegments)
+{
+    int distance = Math.Abs(head.X - segment.X) + 
+                   Math.Abs(head.Y - segment.Y);
+    if (distance == 1)  // Рядом с телом!
+    {
+        Console.Beep(800, 100);  // Предупреждающий звук
+        break;
+    }
+}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 14 -->
+        <div class="slide" id="slide14">
+            <div class="slide-content">
+                <h2>🚀 Что будет дальше?</h2>
+                <h3>На следующем уроке:</h3>
+                <div class="step">
+                    <p><strong>🎯 Цель:</strong> Полировка игры — звуки, цвета, улучшения!</p>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin: 20px 0;">
+                    <div class="step">
+                        <h4>📌 Изучим:</h4>
+                        <ul>
+                            <li>Добавление звуковых эффектов</li>
+                            <li>Работу с цветами в консоли</li>
+                            <li>Создание меню и паузы</li>
+                            <li>Финальные улучшения игры</li>
+                        </ul>
+                    </div>
+                    <div class="step">
+                        <h4>✅ Получим:</h4>
+                        <ul>
+                            <li>Профессионально выглядящую игру</li>
+                            <li>Полноценный звуковой дизайн</li>
+                            <li>Удобное меню и управление</li>
+                            <li>Готовый проект для портфолио</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="crash-demo" style="margin-top: 15px; color: #ffcc00; border-color: #ffcc00;">
+                    Сейчас: Рабочая, но "сырая" игра<br>
+                    Урок 10: Полировка и финальные улучшения!
+                </div>
+                
+                <p style="color: #00ff88; font-size: 1.3rem; margin-top: 15px;">
+                    Следующий урок превратит нашу игру в законченный продукт!
+                </p>
+            </div>
+        </div>
+
+        <!-- Слайд 15 -->
+        <div class="slide" id="slide15">
+            <div class="slide-content">
+                <h2>🎯 Итоги урока</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin: 20px 0;">
+                    <div class="step">
+                        <h3>✅ Мы научились:</h3>
+                        <ul class="checklist">
+                            <li>Проверять самопересечение змейки</li>
+                            <li>Создавать универсальные методы проверки</li>
+                            <li>Оптимизировать алгоритмы проверки</li>
+                            <li>Детализировать обратную связь игроку</li>
+                        </ul>
+                    </div>
+                    <div class="step">
+                        <h3>✅ Мы создали:</h3>
+                        <ul class="checklist">
+                            <li>Полноценную классическую "Змейку"</li>
+                            <li>Два условия поражения (стены + тело)</li>
+                            <li>Информативный экран Game Over</li>
+                            <li>Оптимизированные проверки столкновений</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: rgba(255, 68, 68, 0.1); border-radius: 8px;">
+                    <h3 style="color: #ff4444;">🎮 Главное достижение:</h3>
+                    <p style="font-size: 1.3rem;">Вы завершили создание КЛАССИЧЕСКОЙ игры "Змейка" со всеми механиками!</p>
+                    <p style="font-size: 1.1rem; color: #ffcc00; margin-top: 10px;">Теперь у вас есть полноценная игра, которую можно показать друзьям и добавить в портфолио!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 16 -->
+        <div class="slide" id="slide16">
+            <div class="slide-content">
+                <h1>🎉 Урок завершён!</h1>
+                <p style="font-size: 1.4rem; margin: 20px 0; color: #ffcc00;">
+                    "Сегодня вы завершили создание классики!<br>
+                    Ваша змейка теперь умеет всё: есть, расти,<br>
+                    и, увы, иногда врезаться в себя — как и положено!"
+                </p>
+                <p style="font-size: 1.6rem; color: #00ff88; margin-top: 30px;">
+                    Следующий урок: ПОЛИРОВКА И УЛУЧШЕНИЯ<br>
+                    <span style="font-size: 1.8rem;">✨ Увидимся!</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Навигация -->
+    <div class="navigation">
+        <button class="nav-btn" onclick="showSlide(currentSlide - 1)">
+            <span>◀</span> Назад
+        </button>
+        <button class="nav-btn" onclick="showSlide(currentSlide + 1)">
+            Вперёд <span>▶</span>
+        </button>
+    </div>
+
+    <div class="slide-counter" id="slideCounter">Слайд 1 из 16</div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 16;
+        let startTime = new Date();
+        let timerInterval;
+        let collisionAnimation;
+
+        function init() {
+            updateSlideCounter();
+            updateProgress();
+            startTimer();
+            setupKeyboardNavigation();
+            initCollisionDemo();
+        }
+
+        function showSlide(n) {
+            if (n < 1) n = 1;
+            if (n > totalSlides) n = totalSlides;
+            
+            document.querySelectorAll('.slide').forEach(slide => {
+                slide.classList.remove('active');
+            });
+            
+            document.getElementById(`slide${n}`).classList.add('active');
+            currentSlide = n;
+            
+            updateSlideCounter();
+            updateProgress();
+            
+            // Останавливаем предыдущую анимацию
+            if (collisionAnimation) {
+                clearInterval(collisionAnimation);
+            }
+            
+            // Запускаем анимации для конкретных слайдов
+            if (n === 5) {
+                startCollisionDemo();
+            }
+        }
+
+        function updateSlideCounter() {
+            document.getElementById('slideCounter').textContent = `Слайд ${currentSlide} из ${totalSlides}`;
+        }
+
+        function updateProgress() {
+            const progress = (currentSlide / totalSlides) * 100;
+            document.getElementById('progress').style.width = `${progress}%`;
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                const now = new Date();
+                const diff = Math.floor((now - startTime) / 1000);
+                const minutes = Math.floor(diff / 60);
+                const seconds = diff % 60;
+                document.getElementById('timer').textContent = 
+                    `Время: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function setupKeyboardNavigation() {
+            document.addEventListener('keydown', (e) => {
+                if (!e.target.matches('input, textarea')) {
+                    switch(e.key) {
+                        case 'ArrowLeft':
+                        case 'PageUp':
+                            showSlide(currentSlide - 1);
+                            break;
+                        case 'ArrowRight':
+                        case 'PageDown':
+                        case ' ':
+                            showSlide(currentSlide + 1);
+                            break;
+                        case 'Home':
+                            showSlide(1);
+                            break;
+                        case 'End':
+                            showSlide(totalSlides);
+                            break;
+                    }
+                }
+            });
+        }
+
+        function initCollisionDemo() {
+            const demo = document.getElementById('collisionDemo');
+            if (!demo) return;
+            
+            // Создаем змейку (5 сегментов)
+            for (let i = 0; i < 5; i++) {
+                const segment = document.createElement('div');
+                segment.className = 'snake-segment';
+                if (i === 0) segment.classList.add('segment-head');
+                segment.id = `collisionSegment${i}`;
+                demo.appendChild(segment);
+            }
+        }
+
+        function startCollisionDemo() {
+            const demo = document.getElementById('collisionDemo');
+            if (!demo) return;
+            
+            const demoWidth = demo.clientWidth;
+            const demoHeight = demo.clientHeight;
+            
+            // Создаем змейку в форме петли
+            const segments = [
+                { x: 100, y: 100 },
+                { x: 120, y: 100 },
+                { x: 140, y: 100 },
+                { x: 140, y: 120 },
+                { x: 120, y: 120 }
+            ];
+            
+            let direction = 0; // 0=вправо, 1=вниз, 2=влево, 3=вверх
+            let step = 0;
+            let crashed = false;
+            
+            // Устанавливаем начальные позиции
+            for (let i = 0; i < segments.length; i++) {
+                const segment = document.getElementById(`collisionSegment${i}`);
+                if (segment) {
+                    segment.style.left = `${segments[i].x}px`;
+                    segment.style.top = `${segments[i].y}px`;
+                    segment.classList.remove('segment-crash');
+                }
+            }
+            
+            collisionAnimation = setInterval(() => {
+                if (crashed) return;
+                
+                // Двигаем все сегменты
+                for (let i = segments.length - 1; i > 0; i--) {
+                    segments[i] = { ...segments[i - 1] };
+                }
+                
+                // Двигаем голову
+                switch(direction) {
+                    case 0: // Вправо
+                        segments[0].x += 2;
+                        if (segments[0].x > 160) direction = 1;
+                        break;
+                    case 1: // Вниз
+                        segments[0].y += 2;
+                        if (segments[0].y > 140) direction = 2;
+                        break;
+                    case 2: // Влево
+                        segments[0].x -= 2;
+                        if (segments[0].x < 120) direction = 3;
+                        break;
+                    case 3: // Вверх
+                        segments[0].y -= 2;
+                        if (segments[0].y < 100) {
+                            // Столкновение!
+                            crashed = true;
+                            const head = document.getElementById('collisionSegment0');
+                            if (head) {
+                                head.classList.add('segment-crash');
+                            }
+                            setTimeout(() => {
+                                // Сброс анимации
+                                crashed = false;
+                                direction = 0;
+                                segments[0] = { x: 100, y: 100 };
+                                for (let i = 1; i < segments.length; i++) {
+                                    segments[i] = { x: 100 + i * 20, y: 100 };
+                                }
+                                const head = document.getElementById('collisionSegment0');
+                                if (head) {
+                                    head.classList.remove('segment-crash');
+                                }
+                            }, 2000);
+                        }
+                        break;
+                }
+                
+                // Обновляем позиции на экране
+                for (let i = 0; i < segments.length; i++) {
+                    const segment = document.getElementById(`collisionSegment${i}`);
+                    if (segment) {
+                        segment.style.left = `${segments[i].x}px`;
+                        segment.style.top = `${segments[i].y}px`;
+                    }
+                }
+                
+            }, 50);
+        }
+
+        document.querySelector('.presentation-container').addEventListener('click', (e) => {
+            if (!e.target.closest('.nav-btn')) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const middle = rect.width / 2;
+                
+                if (clickX < middle) {
+                    showSlide(currentSlide - 1);
+                } else {
+                    showSlide(currentSlide + 1);
+                }
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

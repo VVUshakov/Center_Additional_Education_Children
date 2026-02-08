@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Урок 8: Еда и рост | Создание игры Змейка</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #4a235a, #6c3483, #8e44ad);
+            color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .presentation-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            padding: 40px;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            z-index: 10;
+        }
+
+        .slide-content {
+            max-width: 1200px;
+            width: 90%;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 3.2rem;
+            margin-bottom: 20px;
+            color: #ff9966;
+            text-shadow: 0 0 10px rgba(255, 153, 102, 0.5);
+            background: linear-gradient(90deg, #ff9966, #ffcc00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #ffcc00;
+        }
+
+        h3 {
+            font-size: 1.6rem;
+            margin-bottom: 15px;
+            color: #00ff88;
+        }
+
+        p {
+            font-size: 1.3rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        ul, ol {
+            text-align: left;
+            font-size: 1.2rem;
+            line-height: 1.5;
+            margin: 15px auto;
+            max-width: 800px;
+            padding-left: 30px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            padding-left: 10px;
+        }
+
+        .code-block {
+            background: #1a1a2e;
+            color: #00ff88;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 1rem;
+            text-align: left;
+            margin: 15px auto;
+            max-width: 800px;
+            border-left: 4px solid #00ff88;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        .code-block.orange {
+            border-left: 4px solid #ff9966;
+        }
+
+        .code-block.small {
+            font-size: 0.9rem;
+            padding: 15px;
+        }
+
+        .step {
+            background: rgba(0, 204, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 12px 0;
+            border-left: 4px solid #00ccff;
+        }
+
+        .step.food {
+            background: rgba(255, 153, 102, 0.1);
+            border-left: 4px solid #ff9966;
+        }
+
+        .checklist {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .checklist li:before {
+            content: "✅ ";
+            margin-right: 10px;
+            color: #00ff88;
+        }
+
+        .checklist.food li:before {
+            content: "🍎 ";
+            color: #ff6666;
+        }
+
+        .warning {
+            background: rgba(255, 100, 100, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #ff6666;
+            margin: 15px 0;
+        }
+
+        .tip {
+            background: rgba(255, 204, 0, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #ffcc00;
+            margin: 15px 0;
+        }
+
+        .success {
+            background: rgba(0, 255, 136, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #00ff88;
+            margin: 15px 0;
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: linear-gradient(135deg, #ff9966, #ffcc00);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 10px rgba(255, 153, 102, 0.4);
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(255, 153, 102, 0.6);
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            font-size: 1.1rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 16px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 100;
+        }
+
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #ff9966, #ffcc00);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .logo {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #ff9966;
+            z-index: 100;
+        }
+
+        .timer {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            font-size: 1.1rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 16px;
+            border-radius: 15px;
+        }
+
+        .highlight {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+
+        .food-emoji {
+            color: #ff6666;
+            font-size: 2rem;
+        }
+
+        .game-demo {
+            border: 2px solid #ff9966;
+            padding: 15px;
+            border-radius: 8px;
+            background: #000;
+            display: inline-block;
+            margin: 15px 0;
+            font-family: 'Consolas', monospace;
+            font-size: 1.1rem;
+            color: #ff9966;
+            min-width: 400px;
+            line-height: 1.3;
+        }
+
+        .snake-grid {
+            display: inline-grid;
+            grid-template-columns: repeat(10, 20px);
+            gap: 1px;
+            margin: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            position: relative;
+        }
+
+        .grid-cell {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-family: 'Consolas', monospace;
+        }
+
+        .grid-cell.wall {
+            background: rgba(0, 204, 255, 0.3);
+            color: #00ccff;
+        }
+
+        .grid-cell.snake-head {
+            background: #00ff88;
+            color: #000;
+            font-weight: bold;
+            border-radius: 50%;
+        }
+
+        .grid-cell.snake-body {
+            background: #00cc66;
+            color: #fff;
+            border-radius: 3px;
+        }
+
+        .grid-cell.food {
+            background: #ff6666;
+            color: #fff;
+            border-radius: 50%;
+            animation: foodPulse 1s infinite;
+        }
+
+        @keyframes foodPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .grid-cell.empty {
+            background: rgba(255, 255, 255, 0.05);
+            color: #666;
+        }
+
+        .visual-example {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .visual-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            min-width: 180px;
+        }
+
+        .food-demo {
+            position: relative;
+            width: 400px;
+            height: 200px;
+            margin: 20px auto;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid #444;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .demo-snake {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #00ff88;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            transform: translate(-50%, -50%);
+            transition: all 0.5s ease;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.7);
+            z-index: 2;
+        }
+
+        .demo-food {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #ff6666;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 15px rgba(255, 102, 102, 0.7);
+            z-index: 1;
+            animation: demoFoodPulse 1.5s infinite;
+        }
+
+        @keyframes demoFoodPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.8; }
+        }
+
+        .score-popup {
+            position: absolute;
+            color: #ffcc00;
+            font-weight: bold;
+            font-size: 1.2rem;
+            text-shadow: 0 0 5px #000;
+            animation: scoreFloat 1s ease-out forwards;
+            z-index: 100;
+        }
+
+        @keyframes scoreFloat {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-50px); opacity: 0; }
+        }
+
+        .random-demo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .random-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ff9966;
+            font-family: 'Consolas', monospace;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .random-button {
+            background: #ff9966;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .random-button:hover {
+            background: #ffcc00;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.3rem; }
+            h2 { font-size: 1.6rem; }
+            h3 { font-size: 1.3rem; }
+            p, li { font-size: 1.1rem; }
+            .slide-content { padding: 20px; }
+            .nav-btn { padding: 10px 16px; font-size: 0.9rem; }
+            .code-block { font-size: 0.9rem; padding: 12px; }
+            .snake-grid { grid-template-columns: repeat(10, 15px); }
+            .grid-cell { width: 15px; height: 15px; font-size: 0.7rem; }
+            .food-demo { width: 300px; height: 150px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">🐍 Урок 8: Еда и рост</div>
+    <div class="timer" id="timer">Время: 00:00</div>
+    
+    <div class="progress-bar">
+        <div class="progress" id="progress"></div>
+    </div>
+
+    <div class="presentation-container">
+        <!-- Слайд 1 -->
+        <div class="slide active" id="slide1">
+            <div class="slide-content">
+                <h1>🍎 УРОК 8: ЕДА И РОСТ</h1>
+                <h2>Добавляем цель и развитие в игру</h2>
+                <p style="font-size: 1.4rem; margin-top: 20px; color: #ffcc00;">
+                    Сегодня наша змейка научится есть и расти!
+                </p>
+                <div class="step" style="margin-top: 20px;">
+                    <h3>🎯 Цель урока:</h3>
+                    <p>1. Научиться генерировать случайную еду на поле</p>
+                    <p>2. Реализовать механику съедения еды</p>
+                    <p>3. Сделать так, чтобы змейка росла при сборе еды</p>
+                </div>
+                <p style="margin-top: 15px;">Длительность: 1 час 20 минут</p>
+            </div>
+        </div>
+
+        <!-- Слайд 2 -->
+        <div class="slide" id="slide2">
+            <div class="slide-content">
+                <h2>📝 Проверка домашнего задания</h2>
+                <div class="step">
+                    <h3>Быстрая проверка Урока 7:</h3>
+                    <ul class="checklist">
+                        <li>У всех есть многосегментная змейка?</li>
+                        <li>Кто увеличил начальную длину до 5 сегментов?</li>
+                        <li>Кто добавил предотвращение разворота на 180°?</li>
+                        <li>Кто реализовал направленные символы для головы?</li>
+                    </ul>
+                </div>
+                <div class="game-demo" style="margin-top: 15px;">
+                    ПРОБЛЕМА СЕЙЧАС:<br>
+                    Змейка двигается, но нет цели!<br>
+                    Нет роста, нет развития!
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 3 -->
+        <div class="slide" id="slide3">
+            <div class="slide-content">
+                <h2>🎯 Зачем нужна еда в игре?</h2>
+                <div class="step">
+                    <h3>Что делает игра без еды?</h3>
+                    <ul>
+                        <li>Змейка просто ползает по полю</li>
+                        <li>Нет цели для игрока</li>
+                        <li>Нет прогресса и развития</li>
+                        <li>Игра быстро надоедает</li>
+                    </ul>
+                </div>
+                
+                <div class="step food" style="margin-top: 15px;">
+                    <h3>Что даст добавление еды?</h3>
+                    <ul class="checklist food">
+                        <li> Цель: собирать еду для роста</li>
+                        <li> Прогресс: змейка становится длиннее</li>
+                        <li> Сложность: управлять длинной змейкой сложнее</li>
+                        <li> Удовольствие: чувство достижения при росте</li>
+                    </ul>
+                </div>
+                
+                <div class="snake-grid" style="margin-top: 20px;">
+                    <div class="grid-cell wall">┌</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">┐</div>
+                    
+                    <div class="grid-cell wall">│</div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell snake-body">○</div>
+                    <div class="grid-cell snake-body">○</div>
+                    <div class="grid-cell snake-head">●</div>
+                    <div class="grid-cell food">🍎</div>
+                    <div class="grid-cell wall">│</div>
+                    
+                    <div class="grid-cell wall">│</div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell wall">│</div>
+                    
+                    <div class="grid-cell wall">│</div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell wall">│</div>
+                    
+                    <div class="grid-cell wall">└</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">┘</div>
+                </div>
+                
+                <p style="color: #ff6666; margin-top: 10px;">
+                    🍎 = еда | ● = голова змейки | ○ = тело змейки
+                </p>
+            </div>
+        </div>
+
+        <!-- Слайд 4 -->
+        <div class="slide" id="slide4">
+            <div class="slide-content">
+                <h2>🎲 ШАГ 1: Генерация случайной еды</h2>
+                <p>Используем Random для создания случайных координат:</p>
+                
+                <div class="code-block orange">
+// Добавляем в начало файла
+using System;
+
+// Создаём объект Random (один на всю программу)
+static Random random = new Random();
+
+// Позиция еды
+static Position foodPosition;
+
+// Метод для создания новой еды
+void GenerateFood()
+{
+    // Генерируем случайные координаты внутри игрового поля
+    int foodX = random.Next(1, FIELD_WIDTH - 1);   // От 1 до FIELD_WIDTH-2
+    int foodY = random.Next(BORDER_OFFSET + 1, 
+                           FIELD_HEIGHT + BORDER_OFFSET - 1);
+    
+    foodPosition = new Position(foodX, foodY);
+    
+    // Проверяем, не попала ли еда на змейку
+    // (это сделаем позже)
+}</div>
+                
+                <div class="random-demo" style="margin-top: 20px;">
+                    <h3>Демо: Random.Next(min, max)</h3>
+                    <div class="random-number" id="randomNumber">0</div>
+                    <button class="random-button" onclick="generateRandom()">
+                        Сгенерировать случайное число
+                    </button>
+                    <p style="color: #aaa; font-size: 0.9rem;">
+                        Random.Next(1, 10) даст числа от 1 до 9
+                    </p>
+                </div>
+                
+                <div class="tip">
+                    <strong>💡 Почему Random нужно создавать ОДИН раз?</strong><br>
+                    Если создавать new Random() в цикле, он будет генерировать<br>
+                    одинаковые числа (потому что создаётся с одинаковым seed).<br>
+                    Создайте один Random и используйте его везде!
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 5 -->
+        <div class="slide" id="slide5">
+            <div class="slide-content">
+                <h2>📍 ШАГ 2: Отрисовка еды</h2>
+                <p>Добавляем метод для рисования еды на поле:</p>
+                
+                <div class="code-block orange">
+void DrawFood()
+{
+    // Устанавливаем позицию курсора
+    Console.SetCursorPosition(foodPosition.X, foodPosition.Y);
+    
+    // Рисуем еду с красивым цветом
+    Console.ForegroundColor = ConsoleColor.Red;
+    Console.Write("●");  // Можно использовать "🍎", "@", "*" и т.д.
+    Console.ResetColor();
+}</div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Обновляем основной цикл отрисовки:</h3>
+                    <div class="code-block small">
+// БЫЛО в игровом цикле:
+Console.Clear();
+DrawInfoPanel();
+DrawBorders();
+DrawSnake();
+=============================
+// СТАЛО:
+Console.Clear();
+DrawInfoPanel();
+DrawBorders();
+DrawSnake();
+DrawFood();  // Рисуем еду ПОСЛЕ змейки!</div>
+                    
+                    <div class="snake-grid" style="margin-top: 15px;">
+                        <div class="grid-cell wall">┌</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">┐</div>
+                        <div class="grid-cell wall">│</div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell food">●</div><div class="grid-cell snake-body">○</div><div class="grid-cell snake-body">○</div><div class="grid-cell snake-head">●</div><div class="grid-cell empty"></div><div class="grid-cell wall">│</div>
+                        <div class="grid-cell wall">│</div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell wall">│</div>
+                        <div class="grid-cell wall">└</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">┘</div>
+                    </div>
+                    
+                    <p style="color: #ff6666; margin-top: 10px;">
+                        Красная точка ● — это еда!
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 6 -->
+        <div class="slide" id="slide6">
+            <div class="slide-content">
+                <h2>🤔 ШАГ 3: Проверка съедения еды</h2>
+                <p>Как определить, что змейка съела еду?</p>
+                
+                <div class="code-block orange">
+// В методе MoveSnake() после вычисления newHead:
+bool ateFood = false;
+
+// Проверяем, совпадает ли новая позиция головы с едой
+if (newHead.X == foodPosition.X && newHead.Y == foodPosition.Y)
+{
+    ateFood = true;  // Еда съедена!
+    
+    // Генерируем новую еду
+    GenerateFood();
+}
+
+// Если НЕ съели еду - удаляем хвост
+if (!ateFood)
+{
+    snakeSegments.RemoveAt(snakeSegments.Count - 1);
+}
+
+// Новую голову добавляем ВСЕГДА
+snakeSegments.Insert(0, newHead);</div>
+                
+                <div class="food-demo" id="foodDemo">
+                    <!-- Анимация будет добавлена через JavaScript -->
+                </div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Ключевая логика:</h3>
+                    <div style="display: flex; flex-direction: column; gap: 10px; margin: 10px 0;">
+                        <div class="visual-box">
+                            <strong>Съели еду:</strong><br>
+                            Добавляем голову + НЕ удаляем хвост = рост на 1
+                        </div>
+                        <div class="visual-box">
+                            <strong>Не съели еду:</strong><br>
+                            Добавляем голову + удаляем хвост = длина не меняется
+                        </div>
+                    </div>
+                    
+                    <div class="tip">
+                        <strong>💡 Математика роста:</strong><br>
+                        • Без еды: Insert(0, newHead) + RemoveAt(Count-1) = длина та же<br>
+                        • С едой: Insert(0, newHead) = длина +1<br>
+                        • Таким образом змейка растёт только при съедении еды!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 7 -->
+        <div class="slide" id="slide7">
+            <div class="slide-content">
+                <h2>🎯 ШАГ 4: Бонусные очки за еду</h2>
+                <p>Добавляем начисление очков при съедении еды:</p>
+                
+                <div class="code-block orange">
+// Константы для очков
+const int FOOD_SCORE = 10;  // Очков за одну еду
+
+// В проверке съедения еды:
+if (newHead.X == foodPosition.X && newHead.Y == foodPosition.Y)
+{
+    ateFood = true;
+    
+    // Добавляем очки
+    score += FOOD_SCORE;
+    
+    // Звук съедения
+    Console.Beep(1000, 200);
+    
+    // Генерируем новую еду
+    GenerateFood();
+}</div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Обновляем информационную панель:</h3>
+                    <div class="code-block small">
+// В методе DrawInfoPanel добавляем:
+Console.WriteLine($"Счёт: {score} | Длина: {snakeSegments.Count} | Еда: {score / FOOD_SCORE}");</div>
+                    
+                    <div style="font-family: 'Consolas'; background: #000; padding: 10px; border-radius: 5px; margin: 15px auto; max-width: 400px;">
+                        <div style="color: #ffcc00; border-bottom: 1px solid #444; padding-bottom: 5px;">
+                            === ЗМЕЙКА ===
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                            <span style="color: #aaa;">Счёт:</span>
+                            <span style="color: #00ff88; font-weight: bold;">50</span>
+                            <span style="color: #aaa;">Длина:</span>
+                            <span style="color: #00ccff; font-weight: bold;">8</span>
+                            <span style="color: #aaa;">Еда:</span>
+                            <span style="color: #ff6666; font-weight: bold;">5</span>
+                        </div>
+                    </div>
+                    
+                    <p><strong>Формула:</strong> Количество съеденной еды = score / FOOD_SCORE</p>
+                </div>
+                
+                <div class="tip">
+                    <strong>💡 Можно сделать разную еду:</strong>
+                    <div class="code-block small">
+// Разные типы еды с разными очками
+enum FoodType { Apple=10, Banana=20, Cherry=50 }
+FoodType currentFoodType;
+
+// При генерации:
+int randomFood = random.Next(0, 3);
+currentFoodType = (FoodType)randomFood;
+score += (int)currentFoodType;</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 8 -->
+        <div class="slide" id="slide8">
+            <div class="slide-content">
+                <h2>🚫 ШАГ 5: Проверка валидности позиции еды</h2>
+                <p>Еда не должна появляться на змейке!</p>
+                
+                <div class="code-block orange">
+bool IsPositionValid(Position position)
+{
+    // 1. Проверяем, не на змейке ли
+    foreach (var segment in snakeSegments)
+    {
+        if (segment.X == position.X && segment.Y == position.Y)
+            return false;
+    }
+    
+    // 2. Проверяем, не на стене ли (опционально)
+    if (position.X <= 0 || position.X >= FIELD_WIDTH - 1 ||
+        position.Y <= BORDER_OFFSET || position.Y >= FIELD_HEIGHT + BORDER_OFFSET)
+        return false;
+    
+    return true;
+}
+
+// Обновлённый GenerateFood:
+void GenerateFood()
+{
+    Position newFoodPosition;
+    int attempts = 0;
+    
+    do
+    {
+        // Генерируем случайную позицию
+        int foodX = random.Next(1, FIELD_WIDTH - 1);
+        int foodY = random.Next(BORDER_OFFSET + 1, 
+                               FIELD_HEIGHT + BORDER_OFFSET - 1);
+        newFoodPosition = new Position(foodX, foodY);
+        
+        attempts++;
+        
+        // Защита от бесконечного цикла
+        if (attempts > 100)
+        {
+            // Если не нашли место за 100 попыток, ставим в (1,1)
+            newFoodPosition = new Position(1, BORDER_OFFSET + 1);
+            break;
+        }
+    }
+    while (!IsPositionValid(newFoodPosition));
+    
+    foodPosition = newFoodPosition;
+}</div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Проблема и решение:</h3>
+                    <div class="visual-example">
+                        <div class="visual-box" style="background: rgba(255, 100, 100, 0.1);">
+                            <h4>Проблема:</h4>
+                            <p>Еда может появиться:<br>• На змейке<br>• В стене<br>• Вне поля</p>
+                        </div>
+                        <div class="visual-box" style="background: rgba(0, 255, 136, 0.1);">
+                            <h4>Решение:</h4>
+                            <p>Проверяем:<br>• IsPositionValid()<br>• Цикл do-while<br>• Защита от зацикливания</p>
+                        </div>
+                    </div>
+                    
+                    <div class="warning">
+                        <strong>⚠️ Важно:</strong> Без защиты от зацикливания игра может зависнуть,<br>
+                        если змейка заполнит почти всё поле и не останется места для еды!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 9 -->
+        <div class="slide" id="slide9">
+            <div class="slide-content">
+                <h2>🔄 ШАГ 6: Полная интеграция в игру</h2>
+                <p>Обновляем структуру программы:</p>
+                
+                <div class="code-block" style="font-size: 0.9rem; max-height: 400px; overflow-y: auto;">
+using System;
+using System.Collections.Generic;
+using System.Threading;
+
+namespace SnakeGame
+{
+    class Program
+    {
+        // Константы...
+        const int FOOD_SCORE = 10;
+        const int INITIAL_SNAKE_LENGTH = 3;
+        
+        // Переменные...
+        static List<Position> snakeSegments = new List<Position>();
+        static Position foodPosition;
+        static Random random = new Random();
+        static int score = 0;
+        static bool isGameRunning = true;
+        
+        // Методы...
+        static void InitializeGame()
+        {
+            InitializeSnake();
+            GenerateFood();  // Генерируем первую еду!
+        }
+        
+        static void Main(string[] args)
+        {
+            InitializeGame();
+            
+            Console.WriteLine("=== ЗМЕЙКА С ЕДОЙ ===");
+            Console.WriteLine("Цель: собирай еду (красные точки)!");
+            Console.WriteLine("Еда даёт +10 очков и рост змейки!");
+            Thread.Sleep(3000);
+            
+            while (isGameRunning)
+            {
+                // 1. Обработка ввода
+                // 2. Движение змейки (с проверкой съедения еды)
+                // 3. Проверка столкновений
+                // 4. Отрисовка (InfoPanel, Borders, Snake, Food)
+                // 5. Пауза
+            }
+        }
+    }
+}</div>
+                
+                <div class="success" style="margin-top: 15px;">
+                    <strong>🎯 Ключевые изменения:</strong><br>
+                    1. Добавлена переменная foodPosition<br>
+                    2. Добавлен Random random для генерации<br>
+                    3. Метод GenerateFood() создаёт еду в валидном месте<br>
+                    4. Метод MoveSnake() теперь проверяет съедение еды<br>
+                    5. Змейка растёт при съедении еды<br>
+                    6. Добавлены бонусные очки за еду
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 10 -->
+        <div class="slide" id="slide10">
+            <div class="slide-content">
+                <h2>👁️ Тестируем результат</h2>
+                <p>Что должно получиться:</p>
+                
+                <div style="font-family: 'Consolas', monospace; background: #000; padding: 15px; border-radius: 8px; margin: 15px auto; max-width: 500px; text-align: left;">
+                    <div style="color: #fff; border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 10px;">
+                        === ЗМЕЙКА === | Счёт: 70 | Длина: 10 | Еда: 7
+                    </div>
+                    <div style="text-align: center; white-space: pre;">
+┌────────────────────────────┐
+│                            │
+│     ○ ○ ○ ○ ○ ○            │
+│               ○            │
+│               ○ ○ ●        │
+│                      ●     │
+│                            │
+└────────────────────────────┘
+                    </div>
+                    <div style="color: #aaa; margin-top: 10px; text-align: center;">
+                        Красные ● — еда | Зелёные ● — голова | Тёмные ○ — тело
+                    </div>
+                </div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>✅ Что должно работать:</h3>
+                    <ul class="checklist">
+                        <li>На поле появляется красная еда в случайном месте</li>
+                        <li>При касании еды головой змейки: еда исчезает</li>
+                        <li>Змейка увеличивается на 1 сегмент</li>
+                        <li>Счёт увеличивается на FOOD_SCORE (например, +10)</li>
+                        <li>Появляется новая еда в другом месте</li>
+                        <li>Еда не появляется на змейке или в стенах</li>
+                    </ul>
+                </div>
+                
+                <div class="tip">
+                    <strong>💡 Тест-кейсы для проверки:</strong><br>
+                    1. Съесть еду → рост + очки<br>
+                    2. Еда не появляется на змейке<br>
+                    3. Еда не появляется в стенах<br>
+                    4. Многократное поедание еды работает<br>
+                    5. Информационная панель обновляется
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 11 -->
+        <div class="slide" id="slide11">
+            <div class="slide-content">
+                <h2>⚡ Улучшение: Разные типы еды</h2>
+                <p>Можно сделать игру более интересной:</p>
+                
+                <div class="code-block orange">
+// Класс для еды с типом и очками
+class Food
+{
+    public Position Position { get; set; }
+    public FoodType Type { get; set; }
+    public int ScoreValue { get; set; }
+    
+    public Food(Position position, FoodType type)
+    {
+        Position = position;
+        Type = type;
+        ScoreValue = (int)type;
+    }
+}
+
+enum FoodType 
+{ 
+    Apple = 10,     // Обычная еда
+    Banana = 20,    // Быстрая еда (даёт ускорение)
+    Cherry = 50,    // Бонусная еда
+    GoldenApple = 100 // Редкая еда
+}
+
+// Генерация еды с разными типами
+Food GenerateFoodWithType()
+{
+    Position pos = GenerateValidPosition();
+    
+    // Вероятности разных типов еды
+    int chance = random.Next(0, 100);
+    FoodType type;
+    
+    if (chance < 60) type = FoodType.Apple;        // 60%
+    else if (chance < 85) type = FoodType.Banana;   // 25%
+    else if (chance < 95) type = FoodType.Cherry;   // 10%
+    else type = FoodType.GoldenApple;               // 5%
+    
+    return new Food(pos, type);
+}</div>
+                
+                <div class="visual-example" style="margin-top: 15px;">
+                    <div class="visual-box">
+                        <h4>🍎 Яблоко</h4>
+                        <p>+10 очков</p>
+                        <p>Обычный рост</p>
+                        <p>Часто появляется</p>
+                    </div>
+                    
+                    <div class="visual-box">
+                        <h4>🍌 Банан</h4>
+                        <p>+20 очков</p>
+                        <p>Временно ускоряет</p>
+                        <p>Средняя редкость</p>
+                    </div>
+                    
+                    <div class="visual-box">
+                        <h4>🍒 Вишня</h4>
+                        <p>+50 очков</p>
+                        <p>Двойной рост</p>
+                        <p>Редко появляется</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 12 -->
+        <div class="slide" id="slide12">
+            <div class="slide-content">
+                <h2>💾 Сохраняем результат</h2>
+                <div class="code-block small" style="text-align: center;">
+git add .
+git commit -m "Урок 8: Добавил еду, рост змейки и систему очков"
+git push</div>
+                
+                <div class="step" style="margin-top: 20px;">
+                    <h3>✅ Достижения этого урока:</h3>
+                    <ul class="checklist">
+                        <li>Создана система генерации случайной еды</li>
+                        <li>Реализована проверка съедения еды</li>
+                        <li>Змейка теперь растёт при сборе еды</li>
+                        <li>Добавлены бонусные очки за еду</li>
+                        <li>Еда не появляется на змейке или в стенах</li>
+                        <li>Игра теперь имеет цель и развитие!</li>
+                    </ul>
+                </div>
+                
+                <div class="success">
+                    <strong>🎉 Поздравляем!</strong><br>
+                    Теперь у вас полноценная игра "Змейка" с классическим геймплеем!
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 13 -->
+        <div class="slide" id="slide13">
+            <div class="slide-content">
+                <h2>🏠 Домашнее задание</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin: 20px 0;">
+                    <div class="step" style="background: rgba(255, 153, 102, 0.1);">
+                        <h3>📝 Уровень 1 (обязательно)</h3>
+                        <ul>
+                            <li>Добавь звук при съедении еды</li>
+                            <li>Сделай разные символы для еды (🍎, 🍌, 🍒)</li>
+                            <li>Увеличь FOOD_SCORE до 20 очков</li>
+                        </ul>
+                    </div>
+                    <div class="step" style="background: rgba(255, 204, 0, 0.1);">
+                        <h3>⭐ Уровень 2 (повышенный)</h3>
+                        <ul>
+                            <li>Реализуй таймер для еды (исчезает через 10 секунд)</li>
+                            <li>Добавь "комбо" — бонус за несколько подряд еды</li>
+                            <li>Сделай анимацию съедения еды (всплывающие очки)</li>
+                        </ul>
+                    </div>
+                    <div class="step" style="background: rgba(0, 255, 136, 0.1);">
+                        <h3>🏆 Уровень 3 (эксперт)</h3>
+                        <ul>
+                            <li>Создай разные типы еды с разными эффектами</li>
+                            <li>Реализуй систему "голода" (змейка умирает без еды)</li>
+                            <li>Добавь "ядовитую" еду (уменьшает длину)</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="tip">
+                    <strong>💡 Пример анимации очков:</strong>
+                    <div class="code-block small">
+// При съедении еды:
+Console.SetCursorPosition(foodPosition.X, foodPosition.Y);
+Console.ForegroundColor = ConsoleColor.Yellow;
+Console.Write("+10");
+// Через 200мс стираем
+Thread.Sleep(200);
+Console.SetCursorPosition(foodPosition.X, foodPosition.Y);
+Console.Write("   ");</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 14 -->
+        <div class="slide" id="slide14">
+            <div class="slide-content">
+                <h2>🚀 Что будет дальше?</h2>
+                <h3>На следующем уроке:</h3>
+                <div class="step">
+                    <p><strong>🎯 Цель:</strong> Добавить проверку самопересечения!</p>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin: 20px 0;">
+                    <div class="step">
+                        <h4>📌 Изучим:</h4>
+                        <ul>
+                            <li>Проверку столкновения головы с телом</li>
+                            <li>Алгоритм поиска пересечений</li>
+                            <li>Добавление нового условия поражения</li>
+                            <li>Создание "умной" змейки</li>
+                        </ul>
+                    </div>
+                    <div class="step">
+                        <h4>✅ Получим:</h4>
+                        <ul>
+                            <li>Полную классическую механику "Змейки"</li>
+                            <li>Игру с двумя условиями поражения</li>
+                            <li>Более сложный и интересный геймплей</li>
+                            <li>Настоящий вызов для игрока</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="game-demo" style="margin-top: 15px; color: #ff6666; border-color: #ff6666;">
+                    Сейчас: Змейка с едой и ростом<br>
+                    Урок 9: Самопересечение и полная механика!
+                </div>
+                
+                <p style="color: #00ff88; font-size: 1.3rem; margin-top: 15px;">
+                    Следующий урок завершит создание классической игры "Змейка"!
+                </p>
+            </div>
+        </div>
+
+        <!-- Слайд 15 -->
+        <div class="slide" id="slide15">
+            <div class="slide-content">
+                <h2>🎯 Итоги урока</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin: 20px 0;">
+                    <div class="step">
+                        <h3>✅ Мы научились:</h3>
+                        <ul class="checklist">
+                            <li>Генерировать случайные числа (Random)</li>
+                            <li>Создавать и отрисовывать еду на поле</li>
+                            <li>Проверять съедение еды головой змейки</li>
+                            <li>Реализовывать рост змейки при съедении</li>
+                        </ul>
+                    </div>
+                    <div class="step">
+                        <h3>✅ Мы создали:</h3>
+                        <ul class="checklist">
+                            <li>Полноценную систему еды и роста</li>
+                            <li>Механику начисления очков за еду</li>
+                            <li>Валидацию позиций еды (не на змейке, не в стенах)</li>
+                            <li>Игру с целью и развитием</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: rgba(255, 153, 102, 0.1); border-radius: 8px;">
+                    <h3 style="color: #ff9966;">🍎 Главное достижение:</h3>
+                    <p style="font-size: 1.3rem;">Теперь игрок имеет настоящую цель — собирать еду, расти и набирать очки!</p>
+                    <p style="font-size: 1.1rem; color: #ffcc00; margin-top: 10px;">Игра превратилась из простой демонстрации в захватывающий геймплей!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 16 -->
+        <div class="slide" id="slide16">
+            <div class="slide-content">
+                <h1>🎉 Урок завершён!</h1>
+                <p style="font-size: 1.4rem; margin: 20px 0; color: #ffcc00;">
+                    "Сегодня ваша змейка обрела цель и смысл!<br>
+                    Теперь это не просто движение, а настоящая игра<br>
+                    с ростом, развитием и достижениями."
+                </p>
+                <p style="font-size: 1.6rem; color: #00ff88; margin-top: 30px;">
+                    Следующий урок: САМОПЕРЕСЕЧЕНИЕ<br>
+                    <span style="font-size: 1.8rem;">💥 Увидимся!</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Навигация -->
+    <div class="navigation">
+        <button class="nav-btn" onclick="showSlide(currentSlide - 1)">
+            <span>◀</span> Назад
+        </button>
+        <button class="nav-btn" onclick="showSlide(currentSlide + 1)">
+            Вперёд <span>▶</span>
+        </button>
+    </div>
+
+    <div class="slide-counter" id="slideCounter">Слайд 1 из 16</div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 16;
+        let startTime = new Date();
+        let timerInterval;
+        let foodAnimation;
+
+        function init() {
+            updateSlideCounter();
+            updateProgress();
+            startTimer();
+            setupKeyboardNavigation();
+            initFoodDemo();
+        }
+
+        function showSlide(n) {
+            if (n < 1) n = 1;
+            if (n > totalSlides) n = totalSlides;
+            
+            document.querySelectorAll('.slide').forEach(slide => {
+                slide.classList.remove('active');
+            });
+            
+            document.getElementById(`slide${n}`).classList.add('active');
+            currentSlide = n;
+            
+            updateSlideCounter();
+            updateProgress();
+            
+            // Останавливаем предыдущую анимацию
+            if (foodAnimation) {
+                clearInterval(foodAnimation);
+            }
+            
+            // Запускаем анимации для конкретных слайдов
+            if (n === 4) {
+                generateRandom();
+            }
+            if (n === 6) {
+                startFoodDemo();
+            }
+        }
+
+        function updateSlideCounter() {
+            document.getElementById('slideCounter').textContent = `Слайд ${currentSlide} из ${totalSlides}`;
+        }
+
+        function updateProgress() {
+            const progress = (currentSlide / totalSlides) * 100;
+            document.getElementById('progress').style.width = `${progress}%`;
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                const now = new Date();
+                const diff = Math.floor((now - startTime) / 1000);
+                const minutes = Math.floor(diff / 60);
+                const seconds = diff % 60;
+                document.getElementById('timer').textContent = 
+                    `Время: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function setupKeyboardNavigation() {
+            document.addEventListener('keydown', (e) => {
+                if (!e.target.matches('input, textarea')) {
+                    switch(e.key) {
+                        case 'ArrowLeft':
+                        case 'PageUp':
+                            showSlide(currentSlide - 1);
+                            break;
+                        case 'ArrowRight':
+                        case 'PageDown':
+                        case ' ':
+                            showSlide(currentSlide + 1);
+                            break;
+                        case 'Home':
+                            showSlide(1);
+                            break;
+                        case 'End':
+                            showSlide(totalSlides);
+                            break;
+                    }
+                }
+            });
+        }
+
+        function generateRandom() {
+            const randomNum = document.getElementById('randomNumber');
+            if (randomNum) {
+                const min = 1;
+                const max = 10;
+                const random = Math.floor(Math.random() * (max - min)) + min;
+                randomNum.textContent = random;
+                randomNum.style.animation = 'none';
+                setTimeout(() => {
+                    randomNum.style.animation = 'counterPop 0.5s ease';
+                }, 10);
+            }
+        }
+
+        function initFoodDemo() {
+            const demo = document.getElementById('foodDemo');
+            if (!demo) return;
+            
+            // Создаем змейку
+            for (let i = 0; i < 3; i++) {
+                const segment = document.createElement('div');
+                segment.className = 'demo-snake';
+                segment.id = `foodSnake${i}`;
+                demo.appendChild(segment);
+            }
+            
+            // Создаем еду
+            const food = document.createElement('div');
+            food.className = 'demo-food';
+            food.id = 'foodItem';
+            demo.appendChild(food);
+        }
+
+        function startFoodDemo() {
+            const demo = document.getElementById('foodDemo');
+            if (!demo) return;
+            
+            const demoWidth = demo.clientWidth;
+            const demoHeight = demo.clientHeight;
+            
+            // Начальные позиции
+            const snakePositions = [
+                { x: 100, y: 100 },
+                { x: 80, y: 100 },
+                { x: 60, y: 100 }
+            ];
+            
+            const foodPosition = { x: 200, y: 100 };
+            
+            let direction = 1; // 1=вправо
+            let scoreShown = false;
+            
+            // Устанавливаем начальные позиции
+            for (let i = 0; i < snakePositions.length; i++) {
+                const segment = document.getElementById(`foodSnake${i}`);
+                if (segment) {
+                    segment.style.left = `${snakePositions[i].x}px`;
+                    segment.style.top = `${snakePositions[i].y}px`;
+                }
+            }
+            
+            const foodItem = document.getElementById('foodItem');
+            if (foodItem) {
+                foodItem.style.left = `${foodPosition.x}px`;
+                foodItem.style.top = `${foodPosition.y}px`;
+            }
+            
+            foodAnimation = setInterval(() => {
+                // Двигаем змейку
+                for (let i = snakePositions.length - 1; i > 0; i--) {
+                    snakePositions[i] = { ...snakePositions[i - 1] };
+                }
+                
+                // Двигаем голову
+                if (direction === 1) {
+                    snakePositions[0].x += 2;
+                    
+                    // Проверяем съедение еды
+                    if (snakePositions[0].x >= foodPosition.x - 10 && 
+                        snakePositions[0].x <= foodPosition.x + 10 &&
+                        !scoreShown) {
+                        
+                        // Показываем +10 очков
+                        const scorePopup = document.createElement('div');
+                        scorePopup.className = 'score-popup';
+                        scorePopup.textContent = '+10';
+                        scorePopup.style.left = `${foodPosition.x}px`;
+                        scorePopup.style.top = `${foodPosition.y}px`;
+                        demo.appendChild(scorePopup);
+                        
+                        // Удаляем через 1 секунду
+                        setTimeout(() => {
+                            if (scorePopup.parentNode === demo) {
+                                demo.removeChild(scorePopup);
+                            }
+                        }, 1000);
+                        
+                        // Добавляем новый сегмент
+                        snakePositions.push({ ...snakePositions[snakePositions.length - 1] });
+                        const newSegment = document.createElement('div');
+                        newSegment.className = 'demo-snake';
+                        newSegment.id = `foodSnake${snakePositions.length - 1}`;
+                        demo.appendChild(newSegment);
+                        
+                        scoreShown = true;
+                    }
+                    
+                    if (snakePositions[0].x > demoWidth - 20) {
+                        // Сброс анимации
+                        direction = 1;
+                        snakePositions[0].x = 100;
+                        snakePositions[0].y = 100;
+                        for (let i = 1; i < snakePositions.length; i++) {
+                            snakePositions[i] = { x: 100 - i * 20, y: 100 };
+                        }
+                        scoreShown = false;
+                    }
+                }
+                
+                // Обновляем позиции на экране
+                for (let i = 0; i < snakePositions.length; i++) {
+                    const segment = document.getElementById(`foodSnake${i}`);
+                    if (segment) {
+                        segment.style.left = `${snakePositions[i].x}px`;
+                        segment.style.top = `${snakePositions[i].y}px`;
+                    }
+                }
+                
+            }, 50);
+        }
+
+        document.querySelector('.presentation-container').addEventListener('click', (e) => {
+            if (!e.target.closest('.nav-btn')) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const middle = rect.width / 2;
+                
+                if (clickX < middle) {
+                    showSlide(currentSlide - 1);
+                } else {
+                    showSlide(currentSlide + 1);
+                }
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

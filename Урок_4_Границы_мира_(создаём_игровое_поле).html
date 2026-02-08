@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Урок 4: Игровое поле | Создание игры Змейка</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .presentation-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            padding: 40px;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            z-index: 10;
+        }
+
+        .slide-content {
+            max-width: 1200px;
+            width: 90%;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 3.2rem;
+            margin-bottom: 20px;
+            color: #00ff88;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+            background: linear-gradient(90deg, #00ff88, #00ccff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #00ccff;
+        }
+
+        h3 {
+            font-size: 1.6rem;
+            margin-bottom: 15px;
+            color: #ffcc00;
+        }
+
+        p {
+            font-size: 1.3rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        ul, ol {
+            text-align: left;
+            font-size: 1.2rem;
+            line-height: 1.5;
+            margin: 15px auto;
+            max-width: 800px;
+            padding-left: 30px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            padding-left: 10px;
+        }
+
+        .code-block {
+            background: #1a1a2e;
+            color: #00ff88;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 1rem;
+            text-align: left;
+            margin: 15px auto;
+            max-width: 800px;
+            border-left: 4px solid #00ff88;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        .code-block.small {
+            font-size: 0.9rem;
+            padding: 15px;
+        }
+
+        .step {
+            background: rgba(0, 204, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 12px 0;
+            border-left: 4px solid #00ccff;
+        }
+
+        .checklist {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .checklist li:before {
+            content: "✅ ";
+            margin-right: 10px;
+            color: #00ff88;
+        }
+
+        .warning {
+            background: rgba(255, 100, 100, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #ff6666;
+            margin: 15px 0;
+        }
+
+        .tip {
+            background: rgba(255, 204, 0, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #ffcc00;
+            margin: 15px 0;
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: linear-gradient(135deg, #00ccff, #0066ff);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 10px rgba(0, 102, 255, 0.4);
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 102, 255, 0.6);
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            font-size: 1.1rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 16px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 100;
+        }
+
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00ccff);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .logo {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #00ff88;
+            z-index: 100;
+        }
+
+        .timer {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            font-size: 1.1rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 16px;
+            border-radius: 15px;
+        }
+
+        .highlight {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+
+        .border-demo {
+            border: 2px solid #00ff88;
+            padding: 15px;
+            border-radius: 8px;
+            background: #000;
+            display: inline-block;
+            margin: 15px 0;
+            font-family: 'Consolas', monospace;
+            font-size: 1.1rem;
+            color: #00ff88;
+            min-width: 400px;
+            line-height: 1.3;
+        }
+
+        .border-symbol {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 10px;
+            margin: 2px;
+            border-radius: 3px;
+            font-family: 'Consolas', monospace;
+            border: 1px solid #444;
+        }
+
+        .border-grid {
+            display: inline-grid;
+            grid-template-columns: repeat(10, 20px);
+            gap: 1px;
+            margin: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+        }
+
+        .border-cell {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-family: 'Consolas', monospace;
+        }
+
+        .border-cell.wall {
+            background: rgba(0, 204, 255, 0.3);
+            color: #00ccff;
+        }
+
+        .border-cell.corner {
+            background: rgba(255, 204, 0, 0.3);
+            color: #ffcc00;
+        }
+
+        .border-cell.empty {
+            background: rgba(255, 255, 255, 0.05);
+            color: #666;
+        }
+
+        .border-cell.player {
+            background: #00ff88;
+            color: #000;
+            font-weight: bold;
+            border-radius: 50%;
+        }
+
+        .visual-example {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .visual-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            min-width: 180px;
+        }
+
+        .const-example {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.3rem; }
+            h2 { font-size: 1.6rem; }
+            h3 { font-size: 1.3rem; }
+            p, li { font-size: 1.1rem; }
+            .slide-content { padding: 20px; }
+            .nav-btn { padding: 10px 16px; font-size: 0.9rem; }
+            .code-block { font-size: 0.9rem; padding: 12px; }
+            .border-grid { grid-template-columns: repeat(10, 15px); }
+            .border-cell { width: 15px; height: 15px; font-size: 0.7rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">🐍 Урок 4: Игровое поле</div>
+    <div class="timer" id="timer">Время: 00:00</div>
+    
+    <div class="progress-bar">
+        <div class="progress" id="progress"></div>
+    </div>
+
+    <div class="presentation-container">
+        <!-- Слайд 1 -->
+        <div class="slide active" id="slide1">
+            <div class="slide-content">
+                <h1>📦 УРОК 4: ГРАНИЦЫ МИРА</h1>
+                <h2>Создаём красивое игровое поле</h2>
+                <p style="font-size: 1.4rem; margin-top: 20px; color: #00ccff;">
+                    Сегодня сделаем нашу игру профессиональной и красивой!
+                </p>
+                <div class="step" style="margin-top: 20px;">
+                    <h3>🎯 Цель урока:</h3>
+                    <p>1. Научиться рисовать рамку с помощью символов</p>
+                    <p>2. Создать константы для размера игрового поля</p>
+                    <p>3. Ограничить движение точки границами поля</p>
+                </div>
+                <p style="margin-top: 15px;">Длительность: 1 час 20 минут</p>
+            </div>
+        </div>
+
+        <!-- Слайд 2 -->
+        <div class="slide" id="slide2">
+            <div class="slide-content">
+                <h2>📝 Проверка домашнего задания</h2>
+                <div class="step">
+                    <h3>Быстрая проверка Урока 3:</h3>
+                    <ul class="checklist">
+                        <li>У всех двигается точка при нажатии WASD?</li>
+                        <li>Кто добавил звук при движении?</li>
+                        <li>Кто сделал так, чтобы точка не уходила за границы?</li>
+                        <li>Кто реализовал плавное движение или счётчик шагов?</li>
+                    </ul>
+                </div>
+                <div class="tip" style="margin-top: 15px;">
+                    <strong>💡 Вспоминаем текущую игру:</strong>
+                    <div class="border-demo" style="min-width: 300px; text-align: left;">
+                        ● - управляемая точка<br>
+                        Проблема: уходит за пределы экрана<br>
+                        Решение: добавим видимые границы!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 3 -->
+        <div class="slide" id="slide3">
+            <div class="slide-content">
+                <h2>🎯 Проблема текущей игры</h2>
+                <div class="step">
+                    <h3>Что не так с нашей игрой сейчас?</h3>
+                    <ul>
+                        <li>Точка может уйти за пределы видимости</li>
+                        <li>Игровое поле не имеет чётких границ</li>
+                        <li>Игра выглядит неаккуратно и "сыро"</li>
+                        <li>Нет ощущения законченного продукта</li>
+                    </ul>
+                </div>
+                
+                <div class="tip">
+                    <h3>Решение: Создадим игровое поле с границами!</h3>
+                    <p><strong>Что мы получим:</strong></p>
+                    <div class="border-demo" style="font-family: 'Consolas', monospace; white-space: pre;">
+┌──────────────────────┐
+│                      │
+│         ●            │
+│                      │
+│                      │
+└──────────────────────┘
+                    </div>
+                    <p>• Чёткие границы игровой зоны</p>
+                    <p>• Профессиональный внешний вид</p>
+                    <p>• Естественное ограничение движения</p>
+                    <p>• Подготовка к будущим правилам игры</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 4 -->
+        <div class="slide" id="slide4">
+            <div class="slide-content">
+                <h2>🔤 Знакомство с символами псевдографики</h2>
+                <p>В консоли можно рисовать не только буквы, но и специальные символы:</p>
+                
+                <div class="visual-example">
+                    <div class="visual-box">
+                        <h4>Горизонтальные линии</h4>
+                        <span class="border-symbol">─</span> одинарная<br>
+                        <span class="border-symbol">═</span> двойная<br>
+                        <span class="border-symbol">━</span> толстая
+                    </div>
+                    
+                    <div class="visual-box">
+                        <h4>Вертикальные линии</h4>
+                        <span class="border-symbol">│</span> одинарная<br>
+                        <span class="border-symbol">║</span> двойная<br>
+                        <span class="border-symbol">┃</span> толстая
+                    </div>
+                    
+                    <div class="visual-box">
+                        <h4>Углы</h4>
+                        <span class="border-symbol">┌</span> левый верх<br>
+                        <span class="border-symbol">┐</span> правый верх<br>
+                        <span class="border-symbol">└</span> левый низ<br>
+                        <span class="border-symbol">┘</span> правый низ
+                    </div>
+                </div>
+                
+                <div class="step" style="margin-top: 20px;">
+                    <h3>Как использовать эти символы в коде?</h3>
+                    <div class="code-block">
+// Просто вставляем символы в строки
+Console.Write("┌");    // Левый верхний угол
+Console.Write("─");    // Горизонтальная линия
+Console.Write("┐");    // Правый верхний угол
+Console.Write("│");    // Вертикальная линия
+Console.Write("└");    // Левый нижний угол
+Console.Write("┘");    // Правый нижний угол</div>
+                </div>
+                
+                <div class="warning">
+                    <strong>⚠️ Важно:</strong> Эти символы работают в консоли Windows.<br>
+                    В других системах (Linux, Mac) могут отображаться по-другому,<br>
+                    но для нашего обучения это не критично.
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 5 -->
+        <div class="slide" id="slide5">
+            <div class="slide-content">
+                <h2>📏 ШАГ 1: Определяем размеры поля</h2>
+                <p>Вводим константы для удобства:</p>
+                
+                <div class="code-block">
+// Константы для размера игрового поля
+const int FIELD_WIDTH = 30;    // Ширина поля в символах
+const int FIELD_HEIGHT = 15;   // Высота поля
+const int BORDER_OFFSET = 2;   // Отступ от края окна</div>
+                
+                <div class="const-example">
+                    <div class="visual-box">
+                        <h4>FIELD_WIDTH = 30</h4>
+                        <p>От 0 до 29 включительно</p>
+                        <div class="border-grid">
+                            <div class="border-cell corner">┌</div>
+                            <div class="border-cell wall">─</div>
+                            <div class="border-cell wall">─</div>
+                            <div class="border-cell wall">─</div>
+                            <div class="border-cell wall">─</div>
+                            <div class="border-cell wall">─</div>
+                            <div class="border-cell wall">─</div>
+                            <div class="border-cell wall">─</div>
+                            <div class="border-cell wall">─</div>
+                            <div class="border-cell corner">┐</div>
+                        </div>
+                    </div>
+                    
+                    <div class="visual-box">
+                        <h4>FIELD_HEIGHT = 15</h4>
+                        <p>От 0 до 14 включительно</p>
+                        <div class="border-grid" style="grid-template-columns: repeat(3, 20px);">
+                            <div class="border-cell corner">┌</div>
+                            <div class="border-cell wall">─</div>
+                            <div class="border-cell corner">┐</div>
+                            <div class="border-cell wall">│</div>
+                            <div class="border-cell empty"></div>
+                            <div class="border-cell wall">│</div>
+                            <div class="border-cell wall">│</div>
+                            <div class="border-cell player">●</div>
+                            <div class="border-cell wall">│</div>
+                            <div class="border-cell wall">│</div>
+                            <div class="border-cell empty"></div>
+                            <div class="border-cell wall">│</div>
+                            <div class="border-cell corner">└</div>
+                            <div class="border-cell wall">─</div>
+                            <div class="border-cell corner">┘</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tip">
+                    <strong>💡 Почему константы лучше "магических чисел"?</strong><br>
+                    1. Легко менять размер поля в одном месте<br>
+                    2. Код становится понятнее<br>
+                    3. Меньше шансов ошибиться при вычислениях
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 6 -->
+        <div class="slide" id="slide6">
+            <div class="slide-content">
+                <h2>🎨 ШАГ 2: Создаём метод для рисования границ</h2>
+                <p>Выносим логику рисования в отдельный метод:</p>
+                
+                <div class="code-block">
+void DrawBorders()
+{
+    Console.ForegroundColor = ConsoleColor.DarkGray;
+    
+    // Верхняя граница
+    Console.SetCursorPosition(0, BORDER_OFFSET);
+    Console.Write("┌");
+    for (int x = 1; x < FIELD_WIDTH - 1; x++)
+    {
+        Console.SetCursorPosition(x, BORDER_OFFSET);
+        Console.Write("─");
+    }
+    Console.SetCursorPosition(FIELD_WIDTH - 1, BORDER_OFFSET);
+    Console.Write("┐");
+    
+    // Боковые границы
+    for (int y = BORDER_OFFSET + 1; y < FIELD_HEIGHT + BORDER_OFFSET; y++)
+    {
+        Console.SetCursorPosition(0, y);
+        Console.Write("│");
+        Console.SetCursorPosition(FIELD_WIDTH - 1, y);
+        Console.Write("│");
+    }
+    
+    // Нижняя граница
+    Console.SetCursorPosition(0, FIELD_HEIGHT + BORDER_OFFSET);
+    Console.Write("└");
+    for (int x = 1; x < FIELD_WIDTH - 1; x++)
+    {
+        Console.SetCursorPosition(x, FIELD_HEIGHT + BORDER_OFFSET);
+        Console.Write("─");
+    }
+    Console.SetCursorPosition(FIELD_WIDTH - 1, FIELD_HEIGHT + BORDER_OFFSET);
+    Console.Write("┘");
+    
+    Console.ResetColor();
+}</div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Как работает этот метод?</h3>
+                    <ol>
+                        <li>Устанавливаем цвет границ (DarkGray)</li>
+                        <li>Рисуем верхнюю границу с углами</li>
+                        <li>Рисуем вертикальные границы (левая и правая)</li>
+                        <li>Рисуем нижнюю границу с углами</li>
+                        <li>Возвращаем обычный цвет</li>
+                    </ol>
+                </div>
+                
+                <div class="warning">
+                    <strong>📌 Важно:</strong> BORDER_OFFSET нужен, чтобы рамка не прилипала к краю консоли<br>
+                    и оставить место для будущей информационной панели.
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 7 -->
+        <div class="slide" id="slide7">
+            <div class="slide-content">
+                <h2>🔄 ШАГ 3: Интегрируем в игровой цикл</h2>
+                <p>Добавляем вызов DrawBorders() в основной цикл:</p>
+                
+                <div class="code-block">
+while (isGameRunning)
+{
+    // Обработка ввода (как в Уроке 3)...
+    
+    // Очистка экрана
+    Console.Clear();
+    
+    // Рисование границ (НОВОЕ!)
+    DrawBorders();
+    
+    // Рисование игрока
+    Console.ForegroundColor = ConsoleColor.Green;
+    Console.SetCursorPosition(playerX, playerY);
+    Console.Write("●");
+    Console.ResetColor();
+    
+    // Пауза
+    Thread.Sleep(100);
+}</div>
+                
+                <div class="step" style="margin-top: 20px;">
+                    <h3>Важно: Начальная позиция игрока</h3>
+                    <p>Теперь начальную позицию нужно вычислять с учётом границ:</p>
+                    <div class="code-block small">
+// Старая позиция (без учёта границ)
+int playerX = 10;
+int playerY = 5;
+=================================
+// Новая позиция (центр поля с учётом границ)
+int playerX = FIELD_WIDTH / 2;
+int playerY = FIELD_HEIGHT / 2 + BORDER_OFFSET;</div>
+                    <p>Так игрок появится точно в центре игрового поля!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 8 -->
+        <div class="slide" id="slide8">
+            <div class="slide-content">
+                <h2>👁️ ШАГ 4: Тестируем результат</h2>
+                <p>Что должно получиться:</p>
+                
+                <div class="border-demo" style="font-family: 'Consolas', monospace; white-space: pre; min-width: 350px;">
+┌────────────────────────────┐
+│                            │
+│                            │
+│                            │
+│             ●              │
+│                            │
+│                            │
+│                            │
+└────────────────────────────┘
+
+Управление: WASD/стрелки
+Выход: Esc
+                </div>
+                
+                <div class="step" style="margin-top: 20px;">
+                    <h3>Полный код на этом этапе:</h3>
+                    <div class="code-block" style="font-size: 0.9rem; max-height: 350px; overflow-y: auto;">
+using System;
+using System.Threading;
+
+namespace SnakeGame
+{
+    class Program
+    {
+        // Константы для размера поля
+        const int FIELD_WIDTH = 30;
+        const int FIELD_HEIGHT = 15;
+        const int BORDER_OFFSET = 2;
+        
+        static void DrawBorders() { /* код с предыдущего слайда */ }
+        
+        static void Main(string[] args)
+        {
+            // Позиция игрока в центре поля
+            int playerX = FIELD_WIDTH / 2;
+            int playerY = FIELD_HEIGHT / 2 + BORDER_OFFSET;
+            bool isGameRunning = true;
+            
+            Console.WriteLine("Игра с границами поля!");
+            Console.WriteLine("Управление: WASD/стрелки");
+            Console.WriteLine("Выход: Esc");
+            Thread.Sleep(2000);
+            Console.Clear();
+            
+            while (isGameRunning)
+            {
+                // Обработка ввода (как в Уроке 3)...
+                
+                Console.Clear();
+                DrawBorders(); // Рисуем границы!
+                
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.SetCursorPosition(playerX, playerY);
+                Console.Write("●");
+                Console.ResetColor();
+                
+                Thread.Sleep(100);
+            }
+            
+            Console.Clear();
+            Console.WriteLine("Игра завершена!");
+            Console.ReadKey();
+        }
+    }
+}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 9 -->
+        <div class="slide" id="slide9">
+            <div class="slide-content">
+                <h2>⚡ Улучшение: Автоматическое вычисление границ</h2>
+                <p>Можно сделать метод более универсальным:</p>
+                
+                <div class="code-block">
+void DrawBorders(int width, int height, int offset)
+{
+    Console.ForegroundColor = ConsoleColor.DarkGray;
+    
+    // Верхняя и нижняя границы
+    for (int x = 0; x < width; x++)
+    {
+        Console.SetCursorPosition(x, offset);
+        Console.Write("─");
+        Console.SetCursorPosition(x, height + offset);
+        Console.Write("─");
+    }
+    
+    // Левая и правая границы
+    for (int y = offset; y <= height + offset; y++)
+    {
+        Console.SetCursorPosition(0, y);
+        Console.Write("│");
+        Console.SetCursorPosition(width - 1, y);
+        Console.Write("│");
+    }
+    
+    // Углы
+    Console.SetCursorPosition(0, offset);
+    Console.Write("┌");
+    Console.SetCursorPosition(width - 1, offset);
+    Console.Write("┐");
+    Console.SetCursorPosition(0, height + offset);
+    Console.Write("└");
+    Console.SetCursorPosition(width - 1, height + offset);
+    Console.Write("┘");
+    
+    Console.ResetColor();
+}</div>
+                
+                <div class="tip" style="margin-top: 15px;">
+                    <strong>💡 Преимущества этого подхода:</strong><br>
+                    1. Метод можно переиспользовать для полей разного размера<br>
+                    2. Код становится более гибким<br>
+                    3. Легко менять размер поля без переписывания метода<br><br>
+                    
+                    <strong>Вызываем так:</strong><br>
+                    <span class="highlight">DrawBorders(FIELD_WIDTH, FIELD_HEIGHT, BORDER_OFFSET);</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 10 -->
+        <div class="slide" id="slide10">
+            <div class="slide-content">
+                <h2>💾 Сохраняем результат</h2>
+                <div class="code-block small" style="text-align: center;">
+git add .
+git commit -m "Урок 4: Добавил игровое поле с границами"
+git push</div>
+                
+                <div class="step" style="margin-top: 20px;">
+                    <h3>✅ Что должно работать:</h3>
+                    <ul class="checklist">
+                        <li>Появляется красивая рамка вокруг игрового поля</li>
+                        <li>Точка появляется в центре поля</li>
+                        <li>Управление WASD работает как прежде</li>
+                        <li>Выход по Esc корректно завершает игру</li>
+                        <li>Код сохранён в репозитории</li>
+                    </ul>
+                </div>
+                
+                <div class="tip">
+                    <strong>🎉 Отличная работа!</strong><br>
+                    Теперь ваша игра выглядит как настоящая профессиональная программа!
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 11 -->
+        <div class="slide" id="slide11">
+            <div class="slide-content">
+                <h2>🏠 Домашнее задание</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin: 20px 0;">
+                    <div class="step" style="background: rgba(0, 255, 136, 0.1);">
+                        <h3>📝 Уровень 1 (обязательно)</h3>
+                        <ul>
+                            <li>Измени цвет границ на синий или жёлтый</li>
+                            <li>Сделай рамку двойной (символы ═ и ║)</li>
+                            <li>Добавь отступ сверху для будущего счёта</li>
+                        </ul>
+                    </div>
+                    <div class="step" style="background: rgba(0, 204, 255, 0.1);">
+                        <h3>⭐ Уровень 2 (повышенный)</h3>
+                        <ul>
+                            <li>Сделай мигающие границы (меняй цвет каждый кадр)</li>
+                            <li>Добавь внутренние "препятствия" внутри поля</li>
+                            <li>Создай метод, который рисует сетку внутри поля</li>
+                        </ul>
+                    </div>
+                    <div class="step" style="background: rgba(255, 204, 0, 0.1);">
+                        <h3>🏆 Уровень 3 (эксперт)</h3>
+                        <ul>
+                            <li>Сделай возможность менять размер поля в настройках</li>
+                            <li>Реализуй разные стили границ (на выбор)</li>
+                            <li>Создай анимированные границы (движущиеся символы)</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="tip">
+                    <strong>💡 Пример двойной рамки:</strong>
+                    <div class="code-block small">
+Console.Write("╔"); // Левый верхний угол (двойной)
+Console.Write("═"); // Горизонтальная линия (двойная)
+Console.Write("╗"); // Правый верхний угол (двойной)
+Console.Write("║"); // Вертикальная линия (двойная)
+Console.Write("╚"); // Левый нижний угол (двойной)
+Console.Write("╝"); // Правый нижний угол (двойной)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 12 -->
+        <div class="slide" id="slide12">
+            <div class="slide-content">
+                <h2>🚀 Что будет дальше?</h2>
+                <h3>На следующем уроке:</h3>
+                <div class="step">
+                    <p><strong>🎯 Цель:</strong> Добавить ПРАВИЛА ИГРЫ — поражение при касании границы!</p>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin: 20px 0;">
+                    <div class="step">
+                        <h4>📌 Изучим:</h4>
+                        <ul>
+                            <li>Проверку столкновений с границами</li>
+                            <li>Условия завершения игры</li>
+                            <li>Создание экрана "Game Over"</li>
+                        </ul>
+                    </div>
+                    <div class="step">
+                        <h4>✅ Получим:</h4>
+                        <ul>
+                            <li>Настоящую игру с правилами</li>
+                            <li>Поражение при ошибке игрока</li>
+                            <li>Цель игры — избегать стен</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="border-demo" style="margin-top: 15px;">
+                    Сейчас: Красивое поле без правил<br>
+                    Урок 5: Игра с правилами и поражением!
+                </div>
+                
+                <p style="color: #00ff88; font-size: 1.3rem; margin-top: 15px;">
+                    Уже завтра ваша игра станет НАСТОЯЩЕЙ — с выигрышем и проигрышем!
+                </p>
+            </div>
+        </div>
+
+        <!-- Слайд 13 -->
+        <div class="slide" id="slide13">
+            <div class="slide-content">
+                <h2>🎯 Итоги урока</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin: 20px 0;">
+                    <div class="step">
+                        <h3>✅ Мы научились:</h3>
+                        <ul class="checklist">
+                            <li>Использовать символы псевдографики</li>
+                            <li>Создавать константы для настроек</li>
+                            <li>Рисовать рамки и границы в консоли</li>
+                            <li>Разделять код на методы</li>
+                        </ul>
+                    </div>
+                    <div class="step">
+                        <h3>✅ Мы создали:</h3>
+                        <ul class="checklist">
+                            <li>Красивое игровое поле с границами</li>
+                            <li>Гибкий метод DrawBorders()</li>
+                            <li>Профессионально выглядящую игру</li>
+                            <li>Основу для будущих правил игры</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: rgba(0, 204, 255, 0.1); border-radius: 8px;">
+                    <h3 style="color: #00ccff;">🎨 Визуальный прогресс:</h3>
+                    <p style="font-size: 1.3rem;">От голого экрана с точкой → к оформленному игровому полю!</p>
+                    <p style="font-size: 1.1rem; color: #ffcc00; margin-top: 10px;">Теперь игра выглядит как законченный продукт, а не учебный пример.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 14 -->
+        <div class="slide" id="slide14">
+            <div class="slide-content">
+                <h1>🎉 Урок завершён!</h1>
+                <p style="font-size: 1.4rem; margin: 20px 0; color: #ffcc00;">
+                    "Сегодня вы превратили простую программу в красивую игру!<br>
+                    Визуальное оформление — это первый шаг к профессионализму."
+                </p>
+                <p style="font-size: 1.6rem; color: #00ff88; margin-top: 30px;">
+                    Следующий урок: ДОБАВЛЯЕМ ПРАВИЛА ИГРЫ<br>
+                    <span style="font-size: 1.8rem;">🚧 Увидимся!</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Навигация -->
+    <div class="navigation">
+        <button class="nav-btn" onclick="showSlide(currentSlide - 1)">
+            <span>◀</span> Назад
+        </button>
+        <button class="nav-btn" onclick="showSlide(currentSlide + 1)">
+            Вперёд <span>▶</span>
+        </button>
+    </div>
+
+    <div class="slide-counter" id="slideCounter">Слайд 1 из 14</div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 14;
+        let startTime = new Date();
+        let timerInterval;
+
+        function init() {
+            updateSlideCounter();
+            updateProgress();
+            startTimer();
+            setupKeyboardNavigation();
+        }
+
+        function showSlide(n) {
+            if (n < 1) n = 1;
+            if (n > totalSlides) n = totalSlides;
+            
+            document.querySelectorAll('.slide').forEach(slide => {
+                slide.classList.remove('active');
+            });
+            
+            document.getElementById(`slide${n}`).classList.add('active');
+            currentSlide = n;
+            
+            updateSlideCounter();
+            updateProgress();
+        }
+
+        function updateSlideCounter() {
+            document.getElementById('slideCounter').textContent = `Слайд ${currentSlide} из ${totalSlides}`;
+        }
+
+        function updateProgress() {
+            const progress = (currentSlide / totalSlides) * 100;
+            document.getElementById('progress').style.width = `${progress}%`;
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                const now = new Date();
+                const diff = Math.floor((now - startTime) / 1000);
+                const minutes = Math.floor(diff / 60);
+                const seconds = diff % 60;
+                document.getElementById('timer').textContent = 
+                    `Время: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function setupKeyboardNavigation() {
+            document.addEventListener('keydown', (e) => {
+                if (!e.target.matches('input, textarea')) {
+                    switch(e.key) {
+                        case 'ArrowLeft':
+                        case 'PageUp':
+                            showSlide(currentSlide - 1);
+                            break;
+                        case 'ArrowRight':
+                        case 'PageDown':
+                        case ' ':
+                            showSlide(currentSlide + 1);
+                            break;
+                        case 'Home':
+                            showSlide(1);
+                            break;
+                        case 'End':
+                            showSlide(totalSlides);
+                            break;
+                    }
+                }
+            });
+        }
+
+        document.querySelector('.presentation-container').addEventListener('click', (e) => {
+            if (!e.target.closest('.nav-btn')) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const middle = rect.width / 2;
+                
+                if (clickX < middle) {
+                    showSlide(currentSlide - 1);
+                } else {
+                    showSlide(currentSlide + 1);
+                }
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

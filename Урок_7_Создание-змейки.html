@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Урок 7: Настоящая змейка | Создание игры Змейка</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .presentation-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            padding: 40px;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            z-index: 10;
+        }
+
+        .slide-content {
+            max-width: 1200px;
+            width: 90%;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 3.2rem;
+            margin-bottom: 20px;
+            color: #00ff88;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+            background: linear-gradient(90deg, #00ff88, #00ccff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #00ccff;
+        }
+
+        h3 {
+            font-size: 1.6rem;
+            margin-bottom: 15px;
+            color: #ffcc00;
+        }
+
+        p {
+            font-size: 1.3rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        ul, ol {
+            text-align: left;
+            font-size: 1.2rem;
+            line-height: 1.5;
+            margin: 15px auto;
+            max-width: 800px;
+            padding-left: 30px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            padding-left: 10px;
+        }
+
+        .code-block {
+            background: #1a1a2e;
+            color: #00ff88;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 1rem;
+            text-align: left;
+            margin: 15px auto;
+            max-width: 800px;
+            border-left: 4px solid #00ff88;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        .code-block.blue {
+            border-left: 4px solid #00ccff;
+        }
+
+        .code-block.small {
+            font-size: 0.9rem;
+            padding: 15px;
+        }
+
+        .step {
+            background: rgba(0, 204, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 12px 0;
+            border-left: 4px solid #00ccff;
+        }
+
+        .step.green {
+            background: rgba(0, 255, 136, 0.1);
+            border-left: 4px solid #00ff88;
+        }
+
+        .checklist {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .checklist li:before {
+            content: "✅ ";
+            margin-right: 10px;
+            color: #00ff88;
+        }
+
+        .checklist.snake li:before {
+            content: "🐍 ";
+            color: #00ff88;
+        }
+
+        .warning {
+            background: rgba(255, 100, 100, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #ff6666;
+            margin: 15px 0;
+        }
+
+        .tip {
+            background: rgba(255, 204, 0, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #ffcc00;
+            margin: 15px 0;
+        }
+
+        .success {
+            background: rgba(0, 255, 136, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #00ff88;
+            margin: 15px 0;
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: linear-gradient(135deg, #00ccff, #0066ff);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 10px rgba(0, 102, 255, 0.4);
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 102, 255, 0.6);
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            font-size: 1.1rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 16px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 100;
+        }
+
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00ccff);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .logo {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #00ff88;
+            z-index: 100;
+        }
+
+        .timer {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            font-size: 1.1rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 16px;
+            border-radius: 15px;
+        }
+
+        .highlight {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+
+        .snake-emoji {
+            color: #00ff88;
+            font-size: 2rem;
+        }
+
+        .snake-demo {
+            border: 2px solid #00ff88;
+            padding: 15px;
+            border-radius: 8px;
+            background: #000;
+            display: inline-block;
+            margin: 15px 0;
+            font-family: 'Consolas', monospace;
+            font-size: 1.1rem;
+            color: #00ff88;
+            min-width: 400px;
+            line-height: 1.3;
+        }
+
+        .snake-grid {
+            display: inline-grid;
+            grid-template-columns: repeat(10, 20px);
+            gap: 1px;
+            margin: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            position: relative;
+        }
+
+        .grid-cell {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-family: 'Consolas', monospace;
+        }
+
+        .grid-cell.wall {
+            background: rgba(0, 204, 255, 0.3);
+            color: #00ccff;
+        }
+
+        .grid-cell.snake-head {
+            background: #00ff88;
+            color: #000;
+            font-weight: bold;
+            border-radius: 50%;
+        }
+
+        .grid-cell.snake-body {
+            background: #00cc66;
+            color: #fff;
+            border-radius: 3px;
+        }
+
+        .grid-cell.empty {
+            background: rgba(255, 255, 255, 0.05);
+            color: #666;
+        }
+
+        .visual-example {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .visual-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            min-width: 180px;
+        }
+
+        .position-list {
+            font-family: 'Consolas', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: left;
+            max-width: 300px;
+        }
+
+        .position-item {
+            padding: 5px;
+            border-bottom: 1px solid #333;
+        }
+
+        .position-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-arrow {
+            color: #00ccff;
+            margin: 0 10px;
+        }
+
+        .movement-animation {
+            position: relative;
+            width: 400px;
+            height: 200px;
+            margin: 20px auto;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid #444;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .snake-segment {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #00ff88;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            transform: translate(-50%, -50%);
+            transition: all 0.5s ease;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.7);
+        }
+
+        .segment-head {
+            background: #00ccff;
+            z-index: 10;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.3rem; }
+            h2 { font-size: 1.6rem; }
+            h3 { font-size: 1.3rem; }
+            p, li { font-size: 1.1rem; }
+            .slide-content { padding: 20px; }
+            .nav-btn { padding: 10px 16px; font-size: 0.9rem; }
+            .code-block { font-size: 0.9rem; padding: 12px; }
+            .snake-grid { grid-template-columns: repeat(10, 15px); }
+            .grid-cell { width: 15px; height: 15px; font-size: 0.7rem; }
+            .movement-animation { width: 300px; height: 150px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">🐍 Урок 7: Настоящая змейка</div>
+    <div class="timer" id="timer">Время: 00:00</div>
+    
+    <div class="progress-bar">
+        <div class="progress" id="progress"></div>
+    </div>
+
+    <div class="presentation-container">
+        <!-- Слайд 1 -->
+        <div class="slide active" id="slide1">
+            <div class="slide-content">
+                <h1>🐍 УРОК 7: НАСТОЯЩАЯ ЗМЕЙКА</h1>
+                <h2>Превращаем точку в многосегментную змейку</h2>
+                <p style="font-size: 1.4rem; margin-top: 20px; color: #00ccff;">
+                    Сегодня мы создадим КЛАССИЧЕСКУЮ игру "Змейка"!
+                </p>
+                <div class="step" style="margin-top: 20px;">
+                    <h3>🎯 Цель урока:</h3>
+                    <p>1. Научиться работать со списками в C# (List<Position>)</p>
+                    <p>2. Создать алгоритм движения "гусеницей"</p>
+                    <p>3. Нарисовать многосегментную змейку вместо точки</p>
+                </div>
+                <p style="margin-top: 15px;">Длительность: 1 час 20 минут</p>
+            </div>
+        </div>
+
+        <!-- Слайд 2 -->
+        <div class="slide" id="slide2">
+            <div class="slide-content">
+                <h2>📝 Проверка домашнего задания</h2>
+                <div class="step">
+                    <h3>Быстрая проверка Урока 6:</h3>
+                    <ul class="checklist">
+                        <li>У всех есть информационная панель со счётом?</li>
+                        <li>Кто добавил звук при получении очков?</li>
+                        <li>Кто сделал прогресс-бар или лучший счёт?</li>
+                        <li>Кто реализовал ускорение игры или бонусы?</li>
+                    </ul>
+                </div>
+                <div class="snake-demo" style="margin-top: 15px;">
+                    ПРОБЛЕМА СЕЙЧАС:<br>
+                    У нас всё ещё ОДНА точка!<br>
+                    Пора создать НАСТОЯЩУЮ змейку!
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 3 -->
+        <div class="slide" id="slide3">
+            <div class="slide-content">
+                <h2>🎯 Чем змейка отличается от точки?</h2>
+                <div class="step">
+                    <h3>Точка (сейчас):</h3>
+                    <ul>
+                        <li>Одна позиция (playerX, playerY)</li>
+                        <li>Один символ на экране</li>
+                        <li>Простое управление</li>
+                    </ul>
+                </div>
+                
+                <div class="step green" style="margin-top: 15px;">
+                    <h3>Змейка (будет):</h3>
+                    <ul class="checklist snake">
+                        <li>Несколько сегментов (голова + тело)</li>
+                        <li>Каждый сегмент имеет свою позицию</li>
+                        <li>Сегменты следуют друг за другом</li>
+                        <li>Можно расти при сборе еды</li>
+                    </ul>
+                </div>
+                
+                <div class="snake-grid" style="margin-top: 20px;">
+                    <div class="grid-cell wall">┌</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">┐</div>
+                    
+                    <div class="grid-cell wall">│</div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell snake-body">○</div>
+                    <div class="grid-cell snake-body">○</div>
+                    <div class="grid-cell snake-head">●</div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell wall">│</div>
+                    
+                    <div class="grid-cell wall">│</div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell wall">│</div>
+                    
+                    <div class="grid-cell wall">│</div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell empty"></div>
+                    <div class="grid-cell wall">│</div>
+                    
+                    <div class="grid-cell wall">└</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">─</div>
+                    <div class="grid-cell wall">┘</div>
+                </div>
+                
+                <p style="color: #00ff88; margin-top: 10px;">
+                    ● = голова змейки | ○ = тело змейки
+                </p>
+            </div>
+        </div>
+
+        <!-- Слайд 4 -->
+        <div class="slide" id="slide4">
+            <div class="slide-content">
+                <h2>📋 ШАГ 1: Создаём список для сегментов</h2>
+                <p>Вместо одной позиции используем List<Position>:</p>
+                
+                <div class="code-block blue">
+// Было (Урок 6):
+int playerX, playerY;  // Одна позиция
+int score;             // Счёт
+====================================
+// Стало (Урок 7):
+using System.Collections.Generic;   // Добавляем новую библиотеку вверху файла
+
+List<Position> snakeSegments = new List<Position>();    // Список сегментов
+int score;                          // Счёт (остаётся)
+Direction currentDirection = Direction.Right;  // Направление движения</div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Что такое List<Position>?</h3>
+                    <div class="visual-example">
+                        <div class="visual-box">
+                            <h4>Список (List)</h4>
+                            <p>• Динамический массив</p>
+                            <p>• Может увеличиваться</p>
+                            <p>• Легко добавлять элементы</p>
+                        </div>
+                        
+                        <div class="visual-box">
+                            <h4>Position</h4>
+                            <p>• Класс с X и Y</p>
+                            <p>• Координаты сегмента</p>
+                            <p>• Из Урока 1-6</p>
+                        </div>
+                    </div>
+                    
+                    <div class="position-list" style="margin: 15px auto;">
+                        <div class="position-item">snakeSegments[0] = (10, 5) <span class="list-arrow">←</span> ГОЛОВА</div>
+                        <div class="position-item">snakeSegments[1] = (9, 5)</div>
+                        <div class="position-item">snakeSegments[2] = (8, 5)</div>
+                        <div class="position-item">snakeSegments[3] = (7, 5)</div>
+                    </div>
+                </div>
+                
+                <div class="tip">
+                    <strong>💡 Почему список, а не массив?</strong><br>
+                    Массив имеет фиксированный размер, а змейка будет расти!<br>
+                    List<Position> может увеличиваться при добавлении еды.
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 5 -->
+        <div class="slide" id="slide5">
+            <div class="slide-content">
+                <h2>📍 ШАГ 2: Инициализируем змейку</h2>
+                <p>Создаём начальную змейку из нескольких сегментов:</p>
+                
+                <div class="code-block blue">
+// Константы для начальной змейки
+const int INITIAL_SNAKE_LENGTH = 3;
+const int INITIAL_X = 10;
+const int INITIAL_Y = 5;
+
+// Метод для создания начальной змейки
+void InitializeSnake()
+{
+    snakeSegments.Clear();  // Очищаем список
+    
+    // Создаём сегменты змейки
+    for (int i = 0; i < INITIAL_SNAKE_LENGTH; i++)
+    {
+        // Каждый следующий сегмент левее предыдущего
+        Position segment = new Position(INITIAL_X - i, INITIAL_Y);
+        snakeSegments.Add(segment);
+    }
+    
+    // Начинаем двигаться вправо
+    currentDirection = Direction.Right;
+}</div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Как выглядит начальная змейка?</h3>
+                    <div class="snake-grid" style="margin: 15px auto;">
+                        <!-- Пустая сетка 10x5 для демонстрации -->
+                        <div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell snake-body">○</div><div class="grid-cell snake-body">○</div><div class="grid-cell snake-head">●</div>
+                        <div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div>
+                    </div>
+                    
+                    <div style="font-family: 'Consolas'; margin-top: 10px;">
+                        snakeSegments = [
+                            <span style="color: #00ff88;">(10,5)</span>,  // Голова (●)
+                            <span style="color: #00cc66;">(9,5)</span>,   // Тело (○)
+                            <span style="color: #00cc66;">(8,5)</span>    // Тело (○)
+                        ]
+                    </div>
+                    
+                    <p style="margin-top: 10px;"><strong>Важно:</strong> Первый элемент списка (индекс 0) — это ГОЛОВА змейки!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 6 -->
+        <div class="slide" id="slide6">
+            <div class="slide-content">
+                <h2>🔄 ШАГ 3: Алгоритм движения змейки</h2>
+                <p>Как двигается многосегментная змейка:</p>
+                
+                <div class="code-block blue">
+void MoveSnake()
+{
+    // 1. Получаем позицию головы
+    Position oldHead = snakeSegments[0];
+    
+    // 2. Вычисляем новую позицию головы
+    Position newHead = CalculateNewHead(oldHead, currentDirection);
+    
+    // 3. Добавляем новую голову В НАЧАЛО списка
+    snakeSegments.Insert(0, newHead);
+    
+    // 4. УДАЛЯЕМ последний сегмент (хвост)
+    // Это создаёт иллюзию движения
+    snakeSegments.RemoveAt(snakeSegments.Count - 1);
+}
+
+Position CalculateNewHead(Position head, Direction direction)
+{
+    return direction switch
+    {
+        Direction.Up    => new Position(head.X, head.Y - 1),
+        Direction.Down  => new Position(head.X, head.Y + 1),
+        Direction.Left  => new Position(head.X - 1, head.Y),
+        Direction.Right => new Position(head.X + 1, head.Y),
+        _ => head
+    };
+}</div>
+                
+                <div class="movement-animation" id="movementDemo">
+                    <!-- Анимация будет добавлена через JavaScript -->
+                </div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Ключевой принцип:</h3>
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin: 10px 0;">
+                        <div class="visual-box">
+                            ДО:<br>
+                            [●][○][○][ ][ ]
+                        </div>
+                        <div style="font-size: 2rem; color: #00ccff;">→</div>
+                        <div class="visual-box">
+                            Движение:<br>
+                            Добавить голову
+                        </div>
+                        <div style="font-size: 2rem; color: #00ccff;">→</div>
+                        <div class="visual-box">
+                            ПОСЛЕ:<br>
+                            [●][●][○][○][ ]
+                        </div>
+                    </div>
+                    
+                    <p><strong>Insert(0, newHead)</strong> — добавляет новую голову В НАЧАЛО</p>
+                    <p><strong>RemoveAt(Count-1)</strong> — удаляет СТАРЫЙ хвост</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 7 -->
+        <div class="slide" id="slide7">
+            <div class="slide-content">
+                <h2>🎨 ШАГ 4: Отрисовка змейки</h2>
+                <p>Метод для рисования всех сегментов змейки:</p>
+                
+                <div class="code-block blue">
+void DrawSnake()
+{
+    // Проходим по всем сегментам змейки
+    for (int i = 0; i < snakeSegments.Count; i++)
+    {
+        Position segment = snakeSegments[i];
+        
+        // Устанавливаем позицию курсора
+        Console.SetCursorPosition(segment.X, segment.Y);
+        
+        // Голову рисуем другим цветом/символом
+        if (i == 0)  // Первый элемент = голова
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.Write("●");  // Голова
+        }
+        else  // Остальные = тело
+        {
+            Console.ForegroundColor = ConsoleColor.DarkGreen;
+            Console.Write("○");  // Тело
+        }
+    }
+    
+    Console.ResetColor();
+}</div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Что изменилось в основном цикле?</h3>
+                    <div class="code-block small">
+// БЫЛО (рисуем точку):
+Console.SetCursorPosition(playerX, playerY);
+Console.Write("●");
+===============================
+// СТАЛО (рисуем змейку):
+DrawSnake();  // Рисуем ВСЕ сегменты</div>
+                    
+                    <div class="snake-grid" style="margin-top: 15px;">
+                        <div class="grid-cell wall">┌</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">┐</div>
+                        <div class="grid-cell wall">│</div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell snake-body">○</div><div class="grid-cell snake-body">○</div><div class="grid-cell snake-head">●</div><div class="grid-cell empty"></div><div class="grid-cell wall">│</div>
+                        <div class="grid-cell wall">│</div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell empty"></div><div class="grid-cell wall">│</div>
+                        <div class="grid-cell wall">└</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">─</div><div class="grid-cell wall">┘</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 8 -->
+        <div class="slide" id="slide8">
+            <div class="slide-content">
+                <h2>🎮 ШАГ 5: Обновляем обработку ввода</h2>
+                <p>Теперь нужно управлять направлением, а не координатами:</p>
+                
+                <div class="code-block blue">
+// БЫЛО (меняем координаты):
+if (key == ConsoleKey.W) playerY--;
+if (key == ConsoleKey.D) playerX++;
+// и т.д.
+======================================
+// СТАЛО (меняем направление):
+if (key == ConsoleKey.W || key == ConsoleKey.UpArrow)
+    currentDirection = Direction.Up;
+    
+if (key == ConsoleKey.S || key == ConsoleKey.DownArrow)
+    currentDirection = Direction.Down;
+    
+if (key == ConsoleKey.A || key == ConsoleKey.LeftArrow)
+    currentDirection = Direction.Left;
+    
+if (key == ConsoleKey.D || key == ConsoleKey.RightArrow)
+    currentDirection = Direction.Right;</div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Добавляем перечисление Direction:</h3>
+                    <div class="code-block small">
+// В начале файла (после using)
+enum Direction
+{
+    Up,
+    Down,
+    Left,
+    Right
+}
+
+// Объявляем переменную
+Direction currentDirection = Direction.Right;</div>
+                    
+                    <div class="tip">
+                        <strong>💡 Что такое enum (перечисление)?</strong><br>
+                        • Специальный тип для ограниченного набора значений<br>
+                        • Безопаснее, чем строки или числа<br>
+                        • Понятнее в коде (Direction.Up вместо 1)<br>
+                        • Автодополнение в Visual Studio
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 9 -->
+        <div class="slide" id="slide9">
+            <div class="slide-content">
+                <h2>🔄 ШАГ 6: Собираем всё вместе</h2>
+                <p>Полная структура игрового цикла:</p>
+                
+                <div class="code-block" style="font-size: 0.9rem; max-height: 400px; overflow-y: auto;">
+using System;
+using System.Collections.Generic;
+using System.Threading;
+
+namespace SnakeGame
+{
+    enum Direction { Up, Down, Left, Right }
+    
+    class Program
+    {
+        // Константы...
+        static List<Position> snakeSegments = new List<Position>();
+        static Direction currentDirection = Direction.Right;
+        static int score = 0;
+        static bool isGameRunning = true;
+        
+        static void InitializeSnake() { /* код с слайда 5 */ }
+        static void MoveSnake() { /* код с слайда 6 */ }
+        static void DrawSnake() { /* код с слайда 7 */ }
+        static void DrawBorders() { /* из Урока 4 */ }
+        static void DrawInfoPanel() { /* из Урока 6 */ }
+        
+        static void Main(string[] args)
+        {
+            InitializeSnake();  // Инициализируем змейку!
+            
+            Console.WriteLine("=== НАСТОЯЩАЯ ЗМЕЙКА ===");
+            Console.WriteLine("Теперь у вас несколько сегментов!");
+            Thread.Sleep(2000);
+            
+            while (isGameRunning)
+            {
+                // 1. Обработка ввода (меняем currentDirection)
+                // 2. Двигаем змейку (MoveSnake())
+                // 3. Проверяем столкновения (со стенами)
+                // 4. Очищаем экран
+                // 5. Рисуем InfoPanel, Borders, Snake
+                // 6. Пауза
+            }
+            
+            // Game Over...
+        }
+    }
+}</div>
+                
+                <div class="success" style="margin-top: 15px;">
+                    <strong>🎯 Ключевые изменения:</strong><br>
+                    1. Вместо playerX/playerY — список snakeSegments<br>
+                    2. Вместо изменения координат — изменение currentDirection<br>
+                    3. Вместо отрисовки точки — отрисовка всех сегментов<br>
+                    4. Добавлено движение "гусеницей"
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 10 -->
+        <div class="slide" id="slide10">
+            <div class="slide-content">
+                <h2>👁️ Тестируем результат</h2>
+                <p>Что должно получиться:</p>
+                
+                <div style="font-family: 'Consolas', monospace; background: #000; padding: 15px; border-radius: 8px; margin: 15px auto; max-width: 500px; text-align: left;">
+                    <div style="color: #fff; border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 10px;">
+                        === ЗМЕЙКА === | Счёт: 15 | Время: 15 сек. | Длина: 3
+                    </div>
+                    <div style="text-align: center; color: #00ccff; white-space: pre;">
+┌────────────────────────────┐
+│                            │
+│         ○ ○ ●              │
+│                            │
+│                            │
+│                            │
+│                            │
+└────────────────────────────┘
+                    </div>
+                    <div style="color: #aaa; margin-top: 10px; text-align: center;">
+                        Управление: WASD/стрелки | Выход: Esc
+                    </div>
+                </div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>✅ Что должно работать:</h3>
+                    <ul class="checklist">
+                        <li>На экране видна змейка из 3 сегментов</li>
+                        <li>Все сегменты двигаются как единое целое</li>
+                        <li>Голова (●) отличается от тела (○)</li>
+                        <li>Информационная панель показывает длину змейки</li>
+                        <li>Столкновения со стенами работают (для головы)</li>
+                    </ul>
+                </div>
+                
+                <div class="warning">
+                    <strong>⚠️ ВАЖНО:</strong> Проверка столкновений теперь должна проверять только ГОЛОВУ змейки!<br>
+                    snakeSegments[0] — это голова, её и проверяем на касание стен.
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 11 -->
+        <div class="slide" id="slide11">
+            <div class="slide-content">
+                <h2>⚡ Улучшение: Предотвращение разворота на 180°</h2>
+                <p>Проблема: Змейка не должна разворачиваться на месте (сама в себя)</p>
+                
+                <div class="code-block blue">
+// Проверка на противоположное направление
+bool CanChangeDirection(Direction newDirection, Direction currentDirection)
+{
+    // Нельзя повернуть на 180 градусов
+    return !((newDirection == Direction.Up && currentDirection == Direction.Down) ||
+             (newDirection == Direction.Down && currentDirection == Direction.Up) ||
+             (newDirection == Direction.Left && currentDirection == Direction.Right)||
+             (newDirection == Direction.Right && currentDirection == Direction.Left));
+}
+
+// В обработке ввода:
+if (key == ConsoleKey.W && CanChangeDirection(Direction.Up, currentDirection))
+    currentDirection = Direction.Up;</div>
+                
+                <div class="step" style="margin-top: 15px;">
+                    <h3>Почему это важно?</h3>
+                    <div class="visual-example">
+                        <div class="visual-box">
+                            <h4>БЕЗ проверки:</h4>
+                            <p>Движется →<br>Нажал ←<br>Развернулся<br>→ СМЕРТЬ!</p>
+                        </div>
+                        <div class="visual-box">
+                            <h4>С проверкой:</h4>
+                            <p>Движется →<br>Нажал ←<br>Игнорируется<br>→ ЖИВ!</p>
+                        </div>
+                    </div>
+                    
+                    <div class="tip">
+                        <strong>💡 Логика проста:</strong><br>
+                        Если движемся ВВЕРХ, нельзя сразу пойти ВНИЗ<br>
+                        Если движемся ВЛЕВО, нельзя сразу пойти ВПРАВО<br>
+                        Иначе змейка "съедает" саму себя!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 12 -->
+        <div class="slide" id="slide12">
+            <div class="slide-content">
+                <h2>💾 Сохраняем результат</h2>
+                <div class="code-block small" style="text-align: center;">
+git add .
+git commit -m "Урок 7: Создал настоящую многосегментную змейку"
+git push</div>
+                
+                <div class="step" style="margin-top: 20px;">
+                    <h3>✅ Достижения этого урока:</h3>
+                    <ul class="checklist">
+                        <li>Создан List<Position> для сегментов змейки</li>
+                        <li>Реализован алгоритм движения "гусеницей"</li>
+                        <li>Добавлено перечисление Direction</li>
+                        <li>Змейка из 3+ сегментов двигается правильно</li>
+                        <li>Предотвращён разворот на 180 градусов</li>
+                    </ul>
+                </div>
+                
+                <div class="success">
+                    <strong>🎉 Поздравляем!</strong><br>
+                    Теперь у вас НАСТОЯЩАЯ игра "Змейка" с классической механикой!
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 13 -->
+        <div class="slide" id="slide13">
+            <div class="slide-content">
+                <h2>🏠 Домашнее задание</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin: 20px 0;">
+                    <div class="step" style="background: rgba(0, 255, 136, 0.1);">
+                        <h3>📝 Уровень 1 (обязательно)</h3>
+                        <ul>
+                            <li>Сделай начальную длину змейки 5 сегментов</li>
+                            <li>Добавь в информационную панель "Длина: X"</li>
+                            <li>Измени цвета головы и тела змейки</li>
+                        </ul>
+                    </div>
+                    <div class="step" style="background: rgba(0, 204, 255, 0.1);">
+                        <h3>⭐ Уровень 2 (повышенный)</h3>
+                        <ul>
+                            <li>Сделай так, чтобы змейка не могла развернуться на 180°</li>
+                            <li>Добавь анимацию движения (плавное смещение)</li>
+                            <li>Реализуй разные символы для головы (↑↓←→)</li>
+                        </ul>
+                    </div>
+                    <div class="step" style="background: rgba(255, 204, 0, 0.1);">
+                        <h3>🏆 Уровень 3 (эксперт)</h3>
+                        <ul>
+                            <li>Создай возможность паузы игры (клавиша P)</li>
+                            <li>Реализуй "призрачный режим" (прохождение сквозь стены)</li>
+                            <li>Добавь начальную анимацию появления змейки</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="tip">
+                    <strong>💡 Пример символов направления:</strong>
+                    <div class="code-block small">
+// В методе DrawSnake():
+if (i == 0)  // Голова
+{
+    char headSymbol = currentDirection switch
+    {
+        Direction.Up => '↑',
+        Direction.Down => '↓',
+        Direction.Left => '←',
+        Direction.Right => '→',
+        _ => '●'
+    };
+    Console.Write(headSymbol);
+}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 14 -->
+        <div class="slide" id="slide14">
+            <div class="slide-content">
+                <h2>🚀 Что будет дальше?</h2>
+                <h3>На следующем уроке:</h3>
+                <div class="step">
+                    <p><strong>🎯 Цель:</strong> Добавить ЕДУ и рост змейки!</p>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin: 20px 0;">
+                    <div class="step">
+                        <h4>📌 Изучим:</h4>
+                        <ul>
+                            <li>Генерацию случайной еды на поле</li>
+                            <li>Проверку съедения еды</li>
+                            <li>Увеличение длины змейки</li>
+                            <li>Бонусные очки за еду</li>
+                        </ul>
+                    </div>
+                    <div class="step">
+                        <h4>✅ Получим:</h4>
+                        <ul>
+                            <li>Полноценную игру "Змейка" с целью</li>
+                            <li>Растущую змейку при сборе еды</li>
+                            <li>Настоящий игровой процесс</li>
+                            <li>Классическую механику роста</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="snake-demo" style="margin-top: 15px; color: #ffcc00; border-color: #ffcc00;">
+                    Сейчас: Змейка без еды<br>
+                    Урок 8: Еда, рост и настоящий геймплей!
+                </div>
+                
+                <p style="color: #00ff88; font-size: 1.3rem; margin-top: 15px;">
+                    Уже на следующем уроке игра станет полноценной и захватывающей!
+                </p>
+            </div>
+        </div>
+
+        <!-- Слайд 15 -->
+        <div class="slide" id="slide15">
+            <div class="slide-content">
+                <h2>🎯 Итоги урока</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin: 20px 0;">
+                    <div class="step">
+                        <h3>✅ Мы научились:</h3>
+                        <ul class="checklist">
+                            <li>Работать со списками (List<Position>)</li>
+                            <li>Создавать алгоритм движения "гусеницей"</li>
+                            <li>Использовать перечисления (enum Direction)</li>
+                            <li>Отрисовывать несколько сегментов</li>
+                        </ul>
+                    </div>
+                    <div class="step">
+                        <h3>✅ Мы создали:</h3>
+                        <ul class="checklist">
+                            <li>Настоящую многосегментную змейку</li>
+                            <li>Классическую механику движения</li>
+                            <li>Интеллектуальное управление (без разворота)</li>
+                            <li>Игру, которая выглядит как классика</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: rgba(0, 255, 136, 0.1); border-radius: 8px;">
+                    <h3 style="color: #00ff88;">🐍 Главное достижение:</h3>
+                    <p style="font-size: 1.3rem;">Вы превратили простую точку в классическую змейку с настоящей игровой механикой!</p>
+                    <p style="font-size: 1.1rem; color: #ffcc00; margin-top: 10px;">Теперь это не просто упражнение, а настоящая игра "Змейка"!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Слайд 16 -->
+        <div class="slide" id="slide16">
+            <div class="slide-content">
+                <h1>🎉 Урок завершён!</h1>
+                <p style="font-size: 1.4rem; margin: 20px 0; color: #ffcc00;">
+                    "Сегодня вы создали классику!<br>
+                    Из простой точки родилась настоящая змейка —<br>
+                    основа одной из самых известных игр в истории."
+                </p>
+                <p style="font-size: 1.6rem; color: #00ff88; margin-top: 30px;">
+                    Следующий урок: ДОБАВЛЯЕМ ЕДУ И РОСТ<br>
+                    <span style="font-size: 1.8rem;">🍎 Увидимся!</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Навигация -->
+    <div class="navigation">
+        <button class="nav-btn" onclick="showSlide(currentSlide - 1)">
+            <span>◀</span> Назад
+        </button>
+        <button class="nav-btn" onclick="showSlide(currentSlide + 1)">
+            Вперёд <span>▶</span>
+        </button>
+    </div>
+
+    <div class="slide-counter" id="slideCounter">Слайд 1 из 16</div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 16;
+        let startTime = new Date();
+        let timerInterval;
+        let movementAnimation;
+
+        function init() {
+            updateSlideCounter();
+            updateProgress();
+            startTimer();
+            setupKeyboardNavigation();
+            initMovementDemo();
+        }
+
+        function showSlide(n) {
+            if (n < 1) n = 1;
+            if (n > totalSlides) n = totalSlides;
+            
+            document.querySelectorAll('.slide').forEach(slide => {
+                slide.classList.remove('active');
+            });
+            
+            document.getElementById(`slide${n}`).classList.add('active');
+            currentSlide = n;
+            
+            updateSlideCounter();
+            updateProgress();
+            
+            // Останавливаем предыдущую анимацию
+            if (movementAnimation) {
+                clearInterval(movementAnimation);
+            }
+            
+            // Запускаем анимацию для слайда 6
+            if (n === 6) {
+                startMovementDemo();
+            }
+        }
+
+        function updateSlideCounter() {
+            document.getElementById('slideCounter').textContent = `Слайд ${currentSlide} из ${totalSlides}`;
+        }
+
+        function updateProgress() {
+            const progress = (currentSlide / totalSlides) * 100;
+            document.getElementById('progress').style.width = `${progress}%`;
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                const now = new Date();
+                const diff = Math.floor((now - startTime) / 1000);
+                const minutes = Math.floor(diff / 60);
+                const seconds = diff % 60;
+                document.getElementById('timer').textContent = 
+                    `Время: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function setupKeyboardNavigation() {
+            document.addEventListener('keydown', (e) => {
+                if (!e.target.matches('input, textarea')) {
+                    switch(e.key) {
+                        case 'ArrowLeft':
+                        case 'PageUp':
+                            showSlide(currentSlide - 1);
+                            break;
+                        case 'ArrowRight':
+                        case 'PageDown':
+                        case ' ':
+                            showSlide(currentSlide + 1);
+                            break;
+                        case 'Home':
+                            showSlide(1);
+                            break;
+                        case 'End':
+                            showSlide(totalSlides);
+                            break;
+                    }
+                }
+            });
+        }
+
+        function initMovementDemo() {
+            const demo = document.getElementById('movementDemo');
+            if (!demo) return;
+            
+            // Создаем начальные сегменты змейки
+            for (let i = 0; i < 4; i++) {
+                const segment = document.createElement('div');
+                segment.className = 'snake-segment';
+                if (i === 0) segment.classList.add('segment-head');
+                segment.id = `segment${i}`;
+                demo.appendChild(segment);
+            }
+        }
+
+        function startMovementDemo() {
+            const demo = document.getElementById('movementDemo');
+            if (!demo) return;
+            
+            const demoWidth = demo.clientWidth;
+            const demoHeight = demo.clientHeight;
+            
+            // Начальные позиции сегментов
+            const segments = [
+                { x: 150, y: 100 },
+                { x: 130, y: 100 },
+                { x: 110, y: 100 },
+                { x: 90, y: 100 }
+            ];
+            
+            let direction = 1; // 1=вправо, 2=вниз, 3=влево, 4=вверх
+            let step = 0;
+            
+            movementAnimation = setInterval(() => {
+                // Двигаем все сегменты
+                for (let i = segments.length - 1; i > 0; i--) {
+                    segments[i] = { ...segments[i - 1] };
+                }
+                
+                // Двигаем голову
+                switch(direction) {
+                    case 1: // Вправо
+                        segments[0].x += 2;
+                        if (segments[0].x > demoWidth - 30) {
+                            direction = 2;
+                        }
+                        break;
+                    case 2: // Вниз
+                        segments[0].y += 2;
+                        if (segments[0].y > demoHeight - 30) {
+                            direction = 3;
+                        }
+                        break;
+                    case 3: // Влево
+                        segments[0].x -= 2;
+                        if (segments[0].x < 30) {
+                            direction = 4;
+                        }
+                        break;
+                    case 4: // Вверх
+                        segments[0].y -= 2;
+                        if (segments[0].y < 30) {
+                            direction = 1;
+                        }
+                        break;
+                }
+                
+                // Обновляем позиции на экране
+                for (let i = 0; i < segments.length; i++) {
+                    const segment = document.getElementById(`segment${i}`);
+                    if (segment) {
+                        segment.style.left = `${segments[i].x}px`;
+                        segment.style.top = `${segments[i].y}px`;
+                    }
+                }
+                
+                step++;
+                if (step > 100) {
+                    step = 0;
+                }
+                
+            }, 50);
+        }
+
+        document.querySelector('.presentation-container').addEventListener('click', (e) => {
+            if (!e.target.closest('.nav-btn')) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const middle = rect.width / 2;
+                
+                if (clickX < middle) {
+                    showSlide(currentSlide - 1);
+                } else {
+                    showSlide(currentSlide + 1);
+                }
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

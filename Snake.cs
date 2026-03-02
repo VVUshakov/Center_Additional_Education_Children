@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ConsoleApp5
-{
-    // Состояние змейки
+// Состояние змейки
 public class Snake
 {
     public static List<Point> Body { get; set; }            // тело змейки: индекс 0 - хвост, последний индекс - голова
@@ -26,5 +18,3 @@ public class Snake
     }
     #endregion
 }
-}
-

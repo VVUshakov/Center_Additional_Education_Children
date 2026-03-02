@@ -1,14 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ConsoleApp5
+// Интерефейс отрисовки игрового экрана
+public interface IRenderer
 {
-    public interface IRenderer
-    {
-        void Render();
-        void RenderGameOver(); // опционально
-    }
+    void Render();
+    void RenderGameOver(); // опционально
 }

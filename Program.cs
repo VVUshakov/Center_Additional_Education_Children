@@ -3,170 +3,75 @@ namespace ConsoleApp5
 {
     public class Program
     {
+       #region НАСТРОЙКИ КОНСОЛЬНОЙ ИГРЫ
+        private const char SNAKE_HEAD_CHAR = '@';   // символ головы змейки
+        private const char SNAKE_BODY_CHAR = 'O';   // символ тела змейки
+        private const char BORDER_CHAR = '#';       // символ границы игрового поля        
+        #endregion
+        
         #region СОСТОЯНИЕ ИГРЫ
-
-        // Состояние игры
-        private static bool isGameRunning = true;       // флаг продолжения игры
-        private static char BORDER_CHAR = '#';          // символ границы игрового поля
-        private static int OFFSET = 5;                  // сдвиг
-        private static int fps = 100;                   // пауза между циклами (миллисекунды)
-        private static int fieldWidth;                  // ширина игрового поля
-        private static int fieldHeight;                 // высота игрового поля
-
+        private static int _fieldWidth = 60;        // ширина игрового поля
+        private static int _fieldHeight = 30;       // высота игрового поля
+        private static int _fps = 100;              // пауза между циклами (миллисекунды)  
+        private static bool _isExit = false;        // флаг продолжения игры
+        private static bool _isPause = false;       // флаг паузы
+        private static Snake _snake = new Snake();  // объект змейки
+        private static Frame _frame = new Frame();  // объект игрового поля
+        private static Food _food = new Food();  // объект игрового поля
         #endregion
 
         static void Main()
         {
-            // Первоначальные настройки консоли и игрового поля
-            Console.CursorVisible = false;              // видимость курсора
-            Console.WindowWidth = 60;                   // устанавливаем ширину консольного окна
-            Console.WindowHeight = 30;                  // устанавливаем высоту консольного окна
-            fieldWidth = Console.WindowWidth;           // ширина игрового поля
-            fieldHeight = Console.WindowHeight;         // высота игрового поля
+            InitializeGame();                          // 0. инициализация начального состояния игры
 
-            // Игровой цикл
-            while(isGameRunning)    // пока идет игра
+            while(!_isExit)                             // игровой цикл (пока идет игра)
             {
-                Update_state();     // 1. обновить состояние игры
-                Clear_screen();     // 2. стереть старый кадр
-                Draw_frame();       // 3. нарисовать новый кадр                                
-                Sleep(fps);         // 4. пауза между кадрами
-            }
-
-            Console.ReadKey();  // ожидаем нажатие любой клавиши
-        }
-
-        #region ОСНОВНЫЕ МЕТОДЫ
-
-        // 1. Обновить состояние игры
-        private static void Update_state()
-        {
-            bool isInput = ListenInput(); // 1.1. проверяем есть ли входные данные
-
-            if(isInput)   // 1.2. если есть входные данные, то меняем состояние игры
-            {
-                // TO DO: какая то логика меняющая состояние игры
+                ClearScreen();                          // 1.стереть старый кадр
+                DrawFrame(_frame, _snake, _food);       // 2.нарисовать новый кадр
+                UpdateGameState(_frame, _snake, _food); // 3.обновить состояние игры
+                Sleep(_fps);                            // 4. пауза между кадрами
             }
         }
 
-        // 2. Стереть старый кадр
-        private static void Clear_screen()
+        #region 0. Инициализация начального состояния игры   
+        private static void InitializeGame()
         {
-            Console.Clear();
-        }
-
-        // 3. Нарисовать новый кадр
-        private static void Draw_frame()
-        {
-            // 3.1. Нарисовать границы поля на два знака меньше размера консоли символом '#'
-            DrawBorders(
-                width: fieldWidth,
-                height: fieldHeight,
-                offset: OFFSET,
+            // Инициализация рамки игрового поля
+            _frame = new Frame(
+                width: _fieldWidth,
+                height: _fieldHeight,
                 borderChar: BORDER_CHAR
             );
-
-            // 3.2. Нарисовать змейку
-            DrawSnake();
-
-            // 3.3. Нарисовать еду
-            DrawFood();
-
-            /* Сначала рисуем змейку, так как у нее приоритет над едой,
-             * потому что она уже была ранее и нужно предусмотреть, перед отрисовкой еды,
-             * проверку на пересечение со змейкой,что бы еда не появилась внутри змейки)
-             */
-        }
-
-        // 4. Подождать
-        private static void Sleep(int time)
-        {
-            System.Threading.Thread.Sleep(time);
-        }
-
-        #endregion
-
-        #region ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
-
-        // 1.1. Ждем входных данных (слушаем ввод)
-        private static bool ListenInput()
-        {
-            return Console.KeyAvailable; // если нажата клавиша, то возвращаем флаг
-        }
-
-        // 3.1. Нарисовать границы игрового поля
-        public static void DrawBorders(int width, int height, int offset, char borderChar = '*')
-        {
-            int upperBorder = offset;           // верхняя граница поля
-            int lowerBorder = offset + height;  // нижняя граница поля
-            int leftBorder = offset;            // левая граница поля
-            int rightBorder = offset + width;   // правая граница поля
-
-            Console.Clear();
-
-            // Верхняя граница
-            for(int x = leftBorder; x < rightBorder; x++)
+        
+            // Инициализация змейки
+            // Создаем начальное тело змейки (3 сегмента, голова справа)
+            int startX = _fieldWidth / 2;      // центр поля по горизонтали
+            int startY = _fieldHeight / 2;     // центр поля по вертикали
+        
+            List<Point> snakeBody = new List<Point>
             {
-                Console.SetCursorPosition(x, upperBorder);
-                Console.Write(borderChar);
-            }
-
-            // Нижняя граница
-            for(int x = leftBorder; x < rightBorder; x++)
-            {
-                Console.SetCursorPosition(x, lowerBorder);
-                Console.Write(borderChar);
-            }
-
-            // Левая граница            
-            for(int y = upperBorder; y < lowerBorder; y++)
-            {
-                Console.SetCursorPosition(leftBorder, y);
-                Console.Write(borderChar);
-            }
-
-            // Правая граница
-            for(int y = upperBorder; y < lowerBorder; y++)
-            {
-                Console.SetCursorPosition(rightBorder, y);
-                Console.Write(borderChar);
-            }
-        }
-
-        // 3.2. Нарисовать змейку
-        private static void DrawSnake()
-        {
-
-        }
-
-        // 3.3. Нарисовать еду
-        private static void DrawFood()
-        {
-
-        }
-
-
-        // Метод для вывода сервисных сообщений в указанных координатах       
-        public static void WriteServiceMessage(string message, int coordinateX, int coordinateY)
-        {
-            // Устанавливаем курсор и пишем сообщение            
-            Console.SetCursorPosition(coordinateX, coordinateY);
-            Console.Write(message);
-        }
-
-        // Вывести сообщение по центру поля
-        public static void WriteMessageInCenter(string message, int width, int height)
-        {
-            int halfMessageLength = message.Length / 2;         // половина длины сообщения
-
-            // Вывести сообщение в указанных координатах
-            WriteServiceMessage(
-                message,                                        // передаваемое сообщение
-                coordinateX: width / 2 - halfMessageLength,     // координата Х начала текста
-                coordinateY: height / 2                         // координата Y начала текста
+                new Point(startX - 2, startY), // хвост
+                new Point(startX - 1, startY), // тело
+                new Point(startX, startY)      // голова
+            };
+        
+            _snake = new Snake(
+                body: snakeBody,
+                currentDirection: Direction.Right,
+                isAlive: true,
+                snakeHead_char: SNAKE_HEAD_CHAR,
+                snakeBody_char: SNAKE_BODY_CHAR
             );
+        
+            // Инициализация еды
+            _food = new Food(
+                position: GenerateRandomFoodPosition(_frame, _snake),
+                isActive: true
+            );
+        
+            // Сброс флагов игры
+            _isExit = false;
+            _isPause = false;
         }
-
-        #endregion
-    }
 }
+

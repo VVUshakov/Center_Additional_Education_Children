@@ -1,11 +1,8 @@
-﻿namespace ConsoleApp5
+// Перечислитель направлений
+public enum Direction
 {
-    // Направления движения
-    public enum Direction
-    {
-        Up,     // вверх
-        Down,   // вниз
-        Left,   // лево
-        Right   // право
-    }
+    Up,     //вверх
+    Down,   // вниз
+    Left,   // влево
+    Right,  // вправо
 }

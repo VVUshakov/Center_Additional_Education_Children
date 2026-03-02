@@ -1,4 +1,4 @@
-﻿namespace ConsoleApp5
+namespace ConsoleApp5
 {
     // Класс для хранения состояния еды на игровом поле
     public class Food
@@ -8,11 +8,11 @@
                
         #region КОНСТРУКТОР
         public Food(
-            Point position,            
+            Point position = null,            
             bool isActive = true
         )
         {
-            Position = position;
+            Position = position ?? new Point(0, 0);
             IsActive = isActive;
         }
         #endregion

@@ -1,14 +1,14 @@
-﻿// Класс для хранения состояния игры
-internal class GameState
+// Класс для хранения состояния игры
+public class GameState
 {
     #region СОСТОЯНИЕ ИГРЫ
-    public static int _fieldWidth = 60;    // ширина игрового поля
-    public static int _fieldHeight = 30;   // высота игрового поля
-    public static int _fps = 100;          // пауза между циклами (миллисекунды)  
-    public static bool _isExit = false;    // флаг продолжения игры
-    public static bool _isPause = false;   // флаг паузы
-    public static Snake _snake;            // объект змейки
-    public static Frame _frame;            // объект игрового поля
-    public static Food _food;              // объект игрового поля
+    public int FieldWidth { get; set; } = 60;    // ширина игрового поля
+    public int FieldHeight { get; set; } = 30;   // высота игрового поля
+    public int Fps { get; set; } = 100;          // пауза между циклами (миллисекунды)  
+    public bool IsExit { get; set; } = false;    // флаг продолжения игры
+    public bool IsPause { get; set; } = false;   // флаг паузы
+    public Snake Snake { get; set; }             // объект змейки
+    public Frame Frame { get; set; }             // объект игрового поля
+    public Food Food { get; set; }                // объект еды
     #endregion
 }

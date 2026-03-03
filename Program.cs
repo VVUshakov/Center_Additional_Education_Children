@@ -71,6 +71,16 @@ namespace ConsoleApp5
         private static void InitializeGame()
         {
             // Инициализация рамки игрового поля
+
+            // Инициализация змейки
+            // Создаем начальное тело змейки (3 сегмента, голова справа)
+
+            // Инициализация еды
+
+            // Сброс флагов игры
+
+            /*
+            // Инициализация рамки игрового поля
             _frame = new Frame(
                 width: _fieldWidth,
                 height: _fieldHeight
@@ -102,7 +112,8 @@ namespace ConsoleApp5
 
             // Сброс флагов игры
             _isExit = false;
-            _isPause = false;
+            _isPause = false; 
+            */
         }
         #endregion       
     }

@@ -1,6 +1,7 @@
 // Интерефейс отрисовки игрового экрана
 public interface IRenderer
 {
-    void Render();
-    void RenderGameOver(); // опционально
+    public void Render();
+    public void Clear();
+    public void RenderGameOver(); // опционально
 }

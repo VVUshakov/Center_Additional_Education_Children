@@ -1,0 +1,13 @@
+﻿Program (только запуск и главный цикл)
+    │
+    ├── GameInitializer (создание начального состояния)
+    │
+    ├── GameState (данные игры)
+    │
+    ├── IRenderer (интерфейс отрисовки)
+    │   └── ConsoleRenderer (конкретная реализация)
+    │
+    ├── IInputHandler (интерфейс ввода)
+    │   └── ConsoleInputHandler (конкретная реализация)
+    │
+    └── GameStateUpdater (обновление логики)

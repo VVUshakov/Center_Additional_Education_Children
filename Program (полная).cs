@@ -1,6 +1,6 @@
-﻿namespace ConsoleApp5
+namespace ConsoleApp5
 {
-    public class Program_полная
+    public class Program
     {
         #region НАСТРОЙКИ КОНСОЛЬНОЙ ИГРЫ
         private const char SNAKE_HEAD_CHAR = '@';   // символ головы змейки

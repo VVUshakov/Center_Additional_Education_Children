@@ -3,10 +3,10 @@ public class Food
 {
     public Point Position { get; set; } // позиция еды на игровом поле
     public bool IsActive { get; set; } // флаг - существует ли еда на поле
-           
+
     #region КОНСТРУКТОР
     public Food(
-        Point position = null,            
+        Point position = null,
         bool isActive = true
     )
     {

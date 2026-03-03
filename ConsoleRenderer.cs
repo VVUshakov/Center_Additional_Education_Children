@@ -1,24 +1,39 @@
-﻿// Класс для отрисовки кадра в консоли
+// Класс для отрисовки кадра в консоли
 internal class ConsoleRenderer : IRenderer
 {
-    public required Frame _frame;                   // объект игрового поля
-    public required Snake _snake;                   // объект змейки
-    public required Food _food;                     // объект еды
-    public required ConsoleWindow _сonsoleWindow;   // объект еды
+    private Frame _frame;                   // объект игрового поля
+    private Snake _snake;                   // объект змейки
+    private Food _food;                     // объект еды
+    private ConsoleWindow _сonsoleWindow;   // объект еды
 
     private const char BORDER_CHAR = '#';       // символ границы игрового поля
-    private const int OFFSET = 5;               // сдвиг (для сервисных сообщений)
     private static char SNAKE_HEAD_CHAR = '@';  // символ головы змейки
     private static char SNAKE_BODY_CHAR = 'O';  // символ тела змейки
 
-    // Конструктор
-    public ConsoleRenderer(Frame frame, Snake snake, Food food, ConsoleWindow сonsoleWindow)
+    #region КОНСТРУКТОРЫ
+    public ConsoleRenderer(
+        Frame frame,
+        Snake snake,
+        Food food,
+        ConsoleWindow сonsoleWindow
+    )
     {
         _frame = frame;
         _snake = snake;
         _food = food;
         _сonsoleWindow = сonsoleWindow;
     }
+    public ConsoleRenderer(
+        GameState gameState,
+        ConsoleWindow consoleWindow
+    )
+    {
+        _frame = gameState.Frame;
+        _snake = gameState.Snake;
+        _food = gameState.Food;
+        _сonsoleWindow = consoleWindow;
+    }
+    #endregion
 
     public void Render()
     {
@@ -27,24 +42,11 @@ internal class ConsoleRenderer : IRenderer
         // Нарисовать еду
 
         /*
+        // Установить параметры консольного окна
+        InitializeConsole();
+
         // Нарисовать границы игрового поля
         DrawBorders();
-
-        // Нарисовать змейку
-        DrawSnake();
-
-        // Нарисовать еду
-        DrawFood();
-        */
-        /*
-        // Нарисовать границы игрового поля
-        DrawBorders(
-            width: _frame.Width,                        // ширина игрового поля
-            height: _frame.Height,                      // высота игрового поля
-            offset: OFFSET,                             // сдвиг (для сервисных сообщений)
-            indentConsole: _сonsoleWindow.Indentation,  // отступ от кромки консольного окна
-            borderChar: BORDER_CHAR                     // символ границы игрового поля
-        );
 
         // Нарисовать змейку
         DrawSnake();
@@ -58,8 +60,6 @@ internal class ConsoleRenderer : IRenderer
     {
         // Нарисовать экран "GameOver"
     }
-
-
 
     // Нарисовать границы игрового поля
     private static void DrawBorders(
@@ -124,5 +124,13 @@ internal class ConsoleRenderer : IRenderer
         // реализовать логику отрисовки еды на консоли
         // (кординаты еды должны прийти во входные параметры
         // УЖЕ проверенные, что они не появятся внутри змейки)
+    }
+
+    // Очистить экран консоли
+    public void Clear()
+    {
+        Console.Clear();
+        // Можно также добавить сброс цвета, если использовали
+        Console.ResetColor();
     }
 }

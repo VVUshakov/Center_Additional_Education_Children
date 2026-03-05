@@ -10,14 +10,13 @@ public class Snake
     public Snake(
         Point head,                             // точка старта (голова)
         Direction direction = Direction.Right,  // направление движения змейки
-        int snakeLength = 3,                    // длина змейки
-        bool isAlive = true                     // флаг жизни змейки
+        int snakeLength = 3                     // длина змейки
     )
     {
         CurrentDirection = Direction.Right;
         Length = snakeLength;
         Body = InitializeSnake(head, direction, snakeLength);
-        IsAlive = isAlive;
+        IsAlive = true;
     }
     #endregion
 
@@ -68,3 +67,4 @@ public class Snake
         // Логика добавления нового сегмента будет в другом методе
     }
 }
+

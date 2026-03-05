@@ -60,18 +60,25 @@ public class Snake
         return body;
     }
 
-    // Метод для движения змейки
+    // Двигаться
     public Snake Move(Snake snake, Direction nextDirection)
     {        
         // Логика движения змейки
     }
 
+    // Скушать
+    public Snake Eat(Snake snake, Direction nextDirection)
+    {        
+        // Логика движения змейки
+    }
+
     // Метод для увеличения длины змейки (при поедании еды)
-    public void Grow()
+    private void Grow()
     {
         Length++;
         // Логика добавления нового сегмента будет в другом методе
     }
 }
+
 
 

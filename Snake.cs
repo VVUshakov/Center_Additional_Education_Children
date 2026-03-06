@@ -8,23 +8,23 @@ public class Snake
 
     #region КОНСТРУКТОР
     public Snake(
-        Point head,                             // точка старта (голова)
+        Point head,                             // точка старта (координата головы змейки)
         Direction direction = Direction.Right,  // направление движения змейки
         int snakeLength = 3                     // длина змейки
     )
     {
-        CurrentDirection = Direction.Right;                     // направление движения змейки
-        Length = snakeLength;                                   // длина змейки
-        Body = InitializeSnake(head, direction, snakeLength);   // тело змейки: индекс 0 - хвост, последний индекс - голова
-        IsAlive = true;                                         // флаг - жива ли змейка
+        CurrentDirection = Direction.Right;                         // направление движения змейки
+        Length = snakeLength;                                       // длина змейки
+        Body = InitializeSnakeBody(head, direction, snakeLength);   // тело змейки: индекс 0 - хвост, последний индекс - голова
+        IsAlive = true;                                             // флаг - жива ли змейка
     }
     #endregion
-
+    
     // Инициализировать тело новой змейки
-    private List<Point> InitializeSnake(
+    public static List<Point> InitializeSnakeBody
         Point head,         // координаты головы змейки
         Direction direction,// направление движения
-        int snakeLength = 3 // длина змейки
+        int snakeLength // длина змейки
     )
     {
         if(snakeLength < 1) snakeLength = 1; // длина змейки должна быть не меньше 1
@@ -32,7 +32,7 @@ public class Snake
         // Создаем объект перечня координат элементов тела змейки
         var body = new List<Point>();
 
-        // Создаем сегменты от хвоста к голове
+        // Создаем сегменты (строим змейку от хвоста к голове)
         for(int i = snakeLength - 1; i >= 0; i--)
         {
             switch(direction)

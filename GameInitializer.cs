@@ -19,12 +19,20 @@ public class GameInitializer
             height: fieldHeight // высота игрового поля
         );
 
-        // 2. Создаем объект змейки
-        Snake snake = CreateInitialSnake(
-            frame,              // объект игрового поля 
-            initialSnakeLength, // начальная длина змейки 
+        // 2. Вычисляем координату головы змейки с учетом центрирования тела змейки на игровом поле
+        Point headPosition = CalculateCenteredHeadPosition(
+            frame.Width,        // ширина игрового поля
+            frame.Height,       // высота игрового поля
+            initialSnakeLength, // начальная длина змейки
             initialDirection    // начальное направление змейки
         );
+
+        // 2. Создаем объект змейки (передаем голову в конструктор Snake, который сам построит тело)
+        Snake snake = new Snake(
+            head: headPosition,             // координата головы змейки
+            direction: initialDirection,    // начальное направление змейки 
+            snakeLength: initialSnakeLength // начальная длина змейки
+        )
 
         // 3. Создаем объект еды
         Food food = CreateInitialFood(
@@ -42,32 +50,8 @@ public class GameInitializer
         );
     }
 
-    // Создать начальную змейку
-    private Snake CreateInitialSnake(
-        Frame frame,            // объект игрового поля
-        int snakeLength,        // длина змейки
-        Direction snakeDirection// направление змейки
-    )
-    {
-        // Создаем объект точки (координаты) головы змейки 
-        Point head = CalculateInitialHeadSnakePosition(
-            frame.Width,        // ширина игрового поля
-            frame.Height,       // высота игрового поля
-            snakeLength,        // длина змейки
-            snakeDirection      // направление змейки
-        );
-
-        // Возвращаем объект змейки
-        return new Snake(
-            head,               // коррдината головы змейки
-            snakeDirection,     // направление змейки
-            snakeLength,        // длина змейки
-            IsAlive = true      // флаг - жива ли змейка
-        );
-    }
-
-    // Рассчитать начальное положение головы змеи (центрирования тела змейки на игровом поле)
-    private Point CalculateInitialHeadSnakePosition(
+    // Рассчитать начальное положение головы относительно центрированного тела змейки на игровом поле
+    private Point CalculateCenteredHeadPosition(
         int fieldWidth,         // ширина игрового поля 
         int fieldHeight,        // высота игрового поля
         int snakeLength,        // длина змейки
@@ -83,36 +67,46 @@ public class GameInitializer
 
         int centerX = fieldWidth / 2;       // центр игрового поля по ширине
         int centerY = fieldHeight / 2;      // центр игрового поля по высоте
-        int halfLength = snakeLength / 2;   // половина длины тела змейки
+        int halfLength = snakeLength / 2;   // половина длины змейки
 
-        return direction switch
+        // Классический switch
+        Point headPosition;
+
+        switch(direction)
         {
-            // Если направление равно "вправо",
-            Direction.Right => new Point(
-                centerX + halfLength,   // центрирование по X сместить вправо на половину длины змейки,
-                centerY                 // относительно ширины игрового поля
-            ),
+            case Direction.Right:           // если направление движения "вправо",
+                headPosition = new Point(   // создаем координату, где
+                    centerX + halfLength,   // центрирование по X сместить вправо на половину длины змейки,
+                    centerY                 // относительно ширины игрового поля
+                );
+                break;
 
-            // Если направление равно "влево",
-            Direction.Left => new Point(
-                centerX - halfLength,   // центрирование по X сместить влево на половину длины змейки,
-                centerY                 // относительно ширины игрового поля
-            ),
+            case Direction.Left:            // если направление движения "влево",
+                headPosition = new Point(   // создаем координату, где
+                    centerX - halfLength,   // центрирование по X сместить влево на половину длины змейки,
+                    centerY                 // относительно ширины игрового поля
+                );
+                break;
 
-            // Если направление равно "вниз", то по Y кординате сместить вниз голову на половину длины змейки
-            Direction.Down => new Point(
-                centerX,                // относительно ширины игрового поля,
-                centerY + halfLength    // центрирование по Y сместить вниз на половину длины змейки
-            ),
+            case Direction.Down:            // если направление движения "вниз",
+                headPosition = new Point(   // создаем координату, где
+                    centerX,                // относительно ширины игрового поля,
+                    centerY + halfLength    // центрирование по Y сместить вниз на половину длины змейки
+                );
+                break;
 
-            // Если направление равно "вверх",
-            Direction.Up => new Point(
-                centerX,                // относительно ширины игрового поля,
-                centerY - halfLength    // центрирование по Y сместить вверх на половину длины змейки
-            ),
+            case Direction.Up:              // если направление движения "вверх",
+                headPosition = new Point(   // создаем координату, где
+                    centerX,                // относительно ширины игрового поля,
+                    centerY - halfLength    // центрирование по Y сместить вверх на половину длины змейки
+                );
+                break;
 
-            _ => throw new ArgumentException($"Неизвестное направление: {direction}")
-        };
+            default:                        // иначе выкидываем исключение
+                throw new ArgumentException($"Неизвестное направление: {direction}");
+        }
+
+        return headPosition;                // возвращаем рассчитанную координату головы
     }
 
     // Создать начальную еду
@@ -128,7 +122,7 @@ public class GameInitializer
 
         if(position == null)
         {
-            isSuccess = false;  // присвоить флагу НЕуспешное выполнение операции
+            isSuccess = false;  // присвоить флагу НЕ успешное выполнение операции
             // throw new InvalidOperationException("Нет свободного места для еды! Невозможно начать игру.");
         }
         else

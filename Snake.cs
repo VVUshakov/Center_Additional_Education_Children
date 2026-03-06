@@ -13,18 +13,23 @@ public class Snake
         int snakeLength = 3                     // длина змейки
     )
     {
-        CurrentDirection = Direction.Right;
-        Length = snakeLength;
-        Body = InitializeSnake(head, direction, snakeLength);
-        IsAlive = true;
+        CurrentDirection = Direction.Right;                     // направление движения змейки
+        Length = snakeLength;                                   // длина змейки
+        Body = InitializeSnake(head, direction, snakeLength);   // тело змейки: индекс 0 - хвост, последний индекс - голова
+        IsAlive = true;                                         // флаг - жива ли змейка
     }
     #endregion
 
     // Инициализировать тело новой змейки
-    private List<Point> InitializeSnake(Point head, Direction direction, int snakeLength = 3)
+    private List<Point> InitializeSnake(
+        Point head,         // координаты головы змейки
+        Direction direction,// направление движения
+        int snakeLength = 3 // длина змейки
+    )
     {
         if(snakeLength < 1) snakeLength = 1; // длина змейки должна быть не меньше 1
 
+        // Создаем объект перечня координат элементов тела змейки
         var body = new List<Point>();
 
         // Создаем сегменты от хвоста к голове
@@ -34,22 +39,22 @@ public class Snake
             {
                 case Direction.Right:
                     // При движении вправо: хвост слева, голова справа
-                    body.Add(new Point(head.X - i, head.Y));
+                    body.Add(new Point(x: head.X - i, y: head.Y));
                     break;
 
                 case Direction.Left:
                     // При движении влево: хвост справа, голова слева
-                    body.Add(new Point(head.X + i, head.Y));
+                    body.Add(new Point(x: head.X + i, y: head.Y));
                     break;
 
                 case Direction.Up:
                     // При движении вверх: хвост снизу, голова сверху
-                    body.Add(new Point(head.X, head.Y + i));
+                    body.Add(new Point(x: head.X, y: head.Y + i));
                     break;
 
                 case Direction.Down:
                     // При движении вниз: хвост сверху, голова снизу
-                    body.Add(new Point(head.X, head.Y - i));
+                    body.Add(new Point(x: head.X, y: head.Y - i));
                     break;
 
                 default:
@@ -61,15 +66,20 @@ public class Snake
     }
 
     // Двигаться
-    public Snake Move(Snake snake, Direction nextDirection)
+    public Snake Move(
+        Direction nextDirection // направление движения
+    )
     {        
         // Логика движения змейки
     }
 
     // Скушать
-    public Snake Eat(Snake snake, Direction nextDirection)
-    {        
-        // Логика движения змейки
+    public Snake Eat(
+        Direction nextDirection // направление еды относительно головы змейки
+    )
+    {
+        Grow(); // добавить длину к змейке
+        // Логика движения змейки        
     }
 
     // Метод для увеличения длины змейки (при поедании еды)
@@ -79,6 +89,3 @@ public class Snake
         // Логика добавления нового сегмента будет в другом методе
     }
 }
-
-
-
